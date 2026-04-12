@@ -1007,9 +1007,9 @@
             } else {
                 // 默认设置
                 pointsSettings = {
-                    primary: { min: 500, max: 1000 },
-                    secondary: { min: 1001, max: 2000 },
-                    tertiary: { min: 2001, max: null }
+                    primary: { min: 25, max: 50 },
+                    secondary: { min: 50, max: 75 },
+                    tertiary: { min: 75, max: 100 }
                 };
                 localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
             }
@@ -1037,7 +1037,7 @@
                     password: 'user123',
                     email: 'user1@example.com',
                     role: 'user',
-                    points: 1500,
+                    points: 100,
                     joinDate: new Date().toISOString(),
                     referrerId: null,
                     referrals: [],
@@ -1046,7 +1046,7 @@
                             id: 'ph1',
                             userId: 'user1',
                             type: 'earn',
-                            amount: 1000,
+                            amount: 50,
                             description: '初始积分',
                             date: new Date().toISOString()
                         },
@@ -1054,7 +1054,7 @@
                             id: 'ph2',
                             userId: 'user1',
                             type: 'earn',
-                            amount: 500,
+                            amount: 50,
                             description: '活动奖励',
                             date: new Date(Date.now() - 86400000).toISOString()
                         }
@@ -1072,12 +1072,12 @@
             if (!localStorage.getItem('gifts')) {
                 // 创建示例礼品 - 按等级分类
                 gifts = [
-                    // 初级礼品 (500-1000积分)
+                    // 初级礼品 (25-50积分)
                     {
                         id: 'gift1',
                         name: '时尚U盘',
                         description: '高速USB 3.0 U盘，32GB容量，防水防尘',
-                        points: 500,
+                        points: 30,
                         stock: 20,
                         image: 'https://p26-doubao-search-sign.byteimg.com/labis/image/ca0729e5ac6ce52a357a7d40699e3347~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=G50V4LRFxlYFJB4dnwwGhIkWOfY%3D',
                         status: 'available',
@@ -1087,7 +1087,7 @@
                         id: 'gift2',
                         name: '精美陶瓷摆件',
                         description: '创意陶瓷摆件，家居装饰品，增添生活情趣',
-                        points: 800,
+                        points: 40,
                         stock: 15,
                         image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
                         status: 'available',
@@ -1097,19 +1097,19 @@
                         id: 'gift3',
                         name: '蓝牙音箱',
                         description: '便携式蓝牙音箱，重低音效果，户外聚会必备',
-                        points: 1000,
+                        points: 50,
                         stock: 12,
                         image: 'https://p3-doubao-search-sign.byteimg.com/labis/27a87d5ce6419724f54053c226de63b1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=4ZwGcLZmF4cOEDRLbrHo8NwSIrA%3D',
                         status: 'available',
                         createDate: new Date().toISOString()
                     },
                     
-                    // 中级礼品 (1001-2000积分)
+                    // 中级礼品 (50-75积分)
                     {
                         id: 'gift4',
                         name: '无线蓝牙耳机',
                         description: '高品质无线蓝牙耳机，支持蓝牙5.0，续航长达24小时',
-                        points: 1200,
+                        points: 60,
                         stock: 10,
                         image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
                         status: 'available',
@@ -1119,7 +1119,7 @@
                         id: 'gift5',
                         name: '木质工艺品',
                         description: '精致木质工艺品，手工雕刻，送礼自用两相宜',
-                        points: 1500,
+                        points: 70,
                         stock: 8,
                         image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
                         status: 'available',
@@ -1129,19 +1129,19 @@
                         id: 'gift6',
                         name: '智能手环',
                         description: '多功能智能手环，支持心率监测、睡眠监测、运动计步等功能',
-                        points: 2000,
+                        points: 75,
                         stock: 5,
                         image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
                         status: 'available',
                         createDate: new Date().toISOString()
                     },
                     
-                    // 高级礼品 (2001积分以上)
+                    // 高级礼品 (75-100积分)
                     {
                         id: 'gift7',
                         name: '智能手表',
                         description: '多功能智能手表，支持心率监测、GPS定位、运动追踪等功能',
-                        points: 2500,
+                        points: 85,
                         stock: 3,
                         image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
                         status: 'available',
@@ -1151,7 +1151,7 @@
                         id: 'gift8',
                         name: '平板电脑',
                         description: '高清平板电脑，10英寸屏幕，64GB存储，适合娱乐和工作',
-                        points: 3500,
+                        points: 100,
                         stock: 2,
                         image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
                         status: 'available',
