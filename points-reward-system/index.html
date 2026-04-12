@@ -334,9 +334,52 @@
                         </div>
                     </div>
                     
-                    <!-- 礼品列表 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="gifts-container">
-                        <!-- 礼品将通过JS动态加载 -->
+                    <!-- 初级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                初级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">500-1000积分</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="初级礼品-container">
+                            <!-- 初级礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 中级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                中级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">1001-2000积分</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="中级礼品-container">
+                            <!-- 中级礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 高级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                高级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">2001积分以上</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="高级礼品-container">
+                            <!-- 高级礼品将通过JS动态加载 -->
+                        </div>
                     </div>
                     
                     <!-- 无结果提示 -->
@@ -934,50 +977,11 @@
             
             // 检查礼品数据
             if (!localStorage.getItem('gifts')) {
-                // 创建示例礼品
+                // 创建示例礼品 - 按等级分类
                 gifts = [
+                    // 初级礼品 (500-1000积分)
                     {
                         id: 'gift1',
-                        name: '无线蓝牙耳机',
-                        description: '高品质无线蓝牙耳机，支持蓝牙5.0，续航长达24小时',
-                        points: 1200,
-                        stock: 10,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift2',
-                        name: '智能手环',
-                        description: '多功能智能手环，支持心率监测、睡眠监测、运动计步等功能',
-                        points: 2000,
-                        stock: 5,
-                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift3',
-                        name: '精美陶瓷摆件',
-                        description: '创意陶瓷摆件，家居装饰品，增添生活情趣',
-                        points: 800,
-                        stock: 15,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift4',
-                        name: '木质工艺品',
-                        description: '精致木质工艺品，手工雕刻，送礼自用两相宜',
-                        points: 1500,
-                        stock: 8,
-                        image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift5',
                         name: '时尚U盘',
                         description: '高速USB 3.0 U盘，32GB容量，防水防尘',
                         points: 500,
@@ -987,12 +991,76 @@
                         createDate: new Date().toISOString()
                     },
                     {
-                        id: 'gift6',
+                        id: 'gift2',
+                        name: '精美陶瓷摆件',
+                        description: '创意陶瓷摆件，家居装饰品，增添生活情趣',
+                        points: 800,
+                        stock: 15,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift3',
                         name: '蓝牙音箱',
                         description: '便携式蓝牙音箱，重低音效果，户外聚会必备',
                         points: 1000,
                         stock: 12,
                         image: 'https://p3-doubao-search-sign.byteimg.com/labis/27a87d5ce6419724f54053c226de63b1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=4ZwGcLZmF4cOEDRLbrHo8NwSIrA%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    
+                    // 中级礼品 (1001-2000积分)
+                    {
+                        id: 'gift4',
+                        name: '无线蓝牙耳机',
+                        description: '高品质无线蓝牙耳机，支持蓝牙5.0，续航长达24小时',
+                        points: 1200,
+                        stock: 10,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift5',
+                        name: '木质工艺品',
+                        description: '精致木质工艺品，手工雕刻，送礼自用两相宜',
+                        points: 1500,
+                        stock: 8,
+                        image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift6',
+                        name: '智能手环',
+                        description: '多功能智能手环，支持心率监测、睡眠监测、运动计步等功能',
+                        points: 2000,
+                        stock: 5,
+                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    
+                    // 高级礼品 (2001积分以上)
+                    {
+                        id: 'gift7',
+                        name: '智能手表',
+                        description: '多功能智能手表，支持心率监测、GPS定位、运动追踪等功能',
+                        points: 2500,
+                        stock: 3,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift8',
+                        name: '平板电脑',
+                        description: '高清平板电脑，10英寸屏幕，64GB存储，适合娱乐和工作',
+                        points: 3500,
+                        stock: 2,
+                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
                         status: 'available',
                         createDate: new Date().toISOString()
                     }
@@ -1798,22 +1866,46 @@
             }
             
             // 显示筛选结果
-            displayGifts(filteredGifts);
+            displayGiftsByLevel(filteredGifts);
         }
         
-        // 显示礼品
-        function displayGifts(giftsToDisplay) {
-            const container = document.getElementById('gifts-container');
-            container.innerHTML = '';
+        // 按等级显示礼品
+        function displayGiftsByLevel(giftsToDisplay) {
+            // 清空所有容器
+            document.getElementById('初级礼品-container').innerHTML = '';
+            document.getElementById('中级礼品-container').innerHTML = '';
+            document.getElementById('高级礼品-container').innerHTML = '';
             
-            // 显示无结果提示或礼品列表
-            if (giftsToDisplay.length === 0) {
+            // 按积分范围分类礼品
+            const 初级礼品 = giftsToDisplay.filter(gift => gift.points >= 500 && gift.points <= 1000);
+            const 中级礼品 = giftsToDisplay.filter(gift => gift.points >= 1001 && gift.points <= 2000);
+            const 高级礼品 = giftsToDisplay.filter(gift => gift.points >= 2001);
+            
+            // 显示各等级礼品
+            displayGiftsInContainer(初级礼品, '初级礼品-container');
+            displayGiftsInContainer(中级礼品, '中级礼品-container');
+            displayGiftsInContainer(高级礼品, '高级礼品-container');
+            
+            // 显示无结果提示（如果所有区域都没有礼品）
+            if (初级礼品.length === 0 && 中级礼品.length === 0 && 高级礼品.length === 0) {
                 document.getElementById('no-gifts-found').classList.remove('hidden');
-                container.classList.add('hidden');
             } else {
                 document.getElementById('no-gifts-found').classList.add('hidden');
-                container.classList.remove('hidden');
-                
+            }
+        }
+        
+        // 在指定容器中显示礼品
+        function displayGiftsInContainer(giftsToDisplay, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (giftsToDisplay.length === 0) {
+                // 如果该区域没有礼品，显示空状态
+                const emptyState = document.createElement('div');
+                emptyState.className = 'col-span-full text-center py-8 text-gray-500';
+                emptyState.innerHTML = '<i class="fa fa-gift text-3xl mb-2"></i><p>该区域暂无礼品</p>';
+                container.appendChild(emptyState);
+            } else {
                 giftsToDisplay.forEach(gift => {
                     const giftCard = createGiftCard(gift);
                     container.appendChild(giftCard);
