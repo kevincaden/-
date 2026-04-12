@@ -1,0 +1,3585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3B82F6">
+    <title>积分兑换礼品系统</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6', // 蓝色
+                        secondary: '#F97316', // 橙色
+                        neutral: '#1F2937', // 深灰色
+                        'neutral-light': '#F3F4F6', // 浅灰色
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-300;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors duration-300;
+            }
+            .btn-outline {
+                @apply border border-primary text-primary px-4 py-2 rounded-md hover:bg-primary hover:text-white transition-colors duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 页面容器 -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- 登录/注册页面 -->
+        <div id="auth-page" class="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden border border-gray-200">
+                <!-- 标志 -->
+                <div class="flex justify-center pt-6 pb-2">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d6af474b12d5439e90ecfa45811fd7b3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260407220134AC8BF5D54B3FFE09D2F0&rrcfp=f06b921b&x-expires=1778162554&x-signature=CcVNdpZnpXr4nNB%2FvKWNdOzVyd0%3D" alt="积分兑换礼品系统" class="h-20">
+                </div>
+                
+                <!-- 标签页 -->
+                <div class="flex border-b">
+                    <button id="login-tab" class="flex-1 py-3 text-center font-medium text-primary border-b-2 border-primary">登录</button>
+                    <button id="register-tab" class="flex-1 py-3 text-center font-medium text-gray-500 hover:text-primary">注册</button>
+                </div>
+                
+                <!-- 登录表单 -->
+                <div id="login-form" class="p-6 animate-fade-in">
+                    <div class="mb-4">
+                        <label for="login-username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="login-username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入用户名">
+                    </div>
+                    <div class="mb-6">
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <input type="password" id="login-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入密码">
+                    </div>
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <label for="remember-me" class="ml-2 block text-sm text-gray-700">记住我</label>
+                        </div>
+                        <a href="#" class="text-sm text-primary hover:text-blue-700">忘记密码?</a>
+                    </div>
+                    <button id="login-btn" class="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300">登录</button>
+                    <div class="mt-4 text-center text-sm">
+                        <span class="text-gray-600">还没有账号?</span>
+                        <button id="switch-to-register" class="text-primary hover:text-blue-700 font-medium">立即注册</button>
+                    </div>
+                </div>
+                
+                <!-- 注册表单 -->
+                <div id="register-form" class="p-6 hidden animate-fade-in">
+                    <div class="mb-4">
+                        <label for="register-username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="register-username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入用户名">
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                        <input type="email" id="register-email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入邮箱">
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <input type="password" id="register-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入密码">
+                    </div>
+                    <div class="mb-6">
+                        <label for="register-referral" class="block text-sm font-medium text-gray-700 mb-1">推荐人ID (可选)</label>
+                        <input type="text" id="register-referral" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入推荐人ID">
+                    </div>
+                    <button id="register-btn" class="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300">注册</button>
+                    <div class="mt-4 text-center text-sm">
+                        <span class="text-gray-600">已有账号?</span>
+                        <button id="switch-to-login" class="text-primary hover:text-blue-700 font-medium">立即登录</button>
+                    </div>
+                </div>
+                
+                <!-- 错误提示 -->
+                <div id="auth-error" class="hidden px-6 py-3 bg-red-50 text-red-700 text-sm border-l-4 border-red-500">
+                    <p id="error-message"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主应用页面 -->
+        <div id="main-app" class="hidden flex-1 flex flex-col">
+            <!-- 顶部导航栏 -->
+            <header class="bg-white shadow-sm">
+                <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d6af474b12d5439e90ecfa45811fd7b3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260407220134AC8BF5D54B3FFE09D2F0&rrcfp=f06b921b&x-expires=1778162554&x-signature=CcVNdpZnpXr4nNB%2FvKWNdOzVyd0%3D" alt="Logo" class="h-8">
+                        <span class="text-xl font-bold text-neutral">积分兑换礼品系统</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-6">
+                        <!-- 导航链接 -->
+                        <nav class="hidden md:flex space-x-6">
+                            <a href="#" class="nav-link active" data-page="dashboard">首页</a>
+                            <a href="#" class="nav-link" data-page="shop">礼品商城</a>
+                            <a href="#" class="nav-link" data-page="history">兑换记录</a>
+                            <a href="#" class="nav-link" data-page="invite">邀请好友</a>
+                            <a href="#" class="nav-link admin-only" data-page="admin">管理中心</a>
+                        </nav>
+                        
+                        <!-- 用户信息 -->
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-primary text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fa fa-star mr-1"></i>
+                                <span id="user-points">0</span>
+                            </div>
+                            <div class="relative" id="user-dropdown">
+                                <button class="flex items-center space-x-2 focus:outline-none">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                        <i class="fa fa-user"></i>
+                                    </div>
+                                    <span id="user-name" class="hidden md:inline-block">用户名</span>
+                                    <i class="fa fa-angle-down text-gray-600"></i>
+                                </button>
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-10" id="user-menu">
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-page="profile">个人中心</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 admin-only" data-page="admin">管理中心</a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 移动端菜单按钮 -->
+                        <button class="md:hidden focus:outline-none" id="mobile-menu-btn">
+                            <i class="fa fa-bars text-gray-600 text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 移动端菜单 -->
+                <div class="md:hidden hidden bg-white border-t border-gray-100" id="mobile-menu">
+                    <div class="container mx-auto px-4 py-2">
+                        <nav class="flex flex-col space-y-2">
+                            <a href="#" class="mobile-nav-link py-2 px-3 rounded-md" data-page="dashboard">首页</a>
+                            <a href="#" class="mobile-nav-link py-2 px-3 rounded-md" data-page="shop">礼品商城</a>
+                            <a href="#" class="mobile-nav-link py-2 px-3 rounded-md" data-page="history">兑换记录</a>
+                            <a href="#" class="mobile-nav-link py-2 px-3 rounded-md" data-page="invite">邀请好友</a>
+                            <a href="#" class="mobile-nav-link py-2 px-3 rounded-md admin-only" data-page="admin">管理中心</a>
+                        </nav>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 主内容区 -->
+            <main class="flex-1 container mx-auto px-4 py-6">
+                <!-- 首页 -->
+                <div id="dashboard-page" class="page-content animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">欢迎回来，<span id="welcome-name">用户名</span>！</h1>
+                        <p class="text-gray-600">您的积分余额: <span id="welcome-points" class="font-semibold text-primary">0</span></p>
+                    </div>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-neutral">总积分</h3>
+                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-primary">
+                                    <i class="fa fa-star"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold text-neutral" id="total-points">0</p>
+                            <p class="text-sm text-gray-500 mt-2">历史累计积分</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-neutral">已兑换礼品</h3>
+                                <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-secondary">
+                                    <i class="fa fa-gift"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold text-neutral" id="total-gifts">0</p>
+                            <p class="text-sm text-gray-500 mt-2">成功兑换的礼品</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-neutral">推荐好友</h3>
+                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                    <i class="fa fa-users"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold text-neutral" id="total-referrals">0</p>
+                            <p class="text-sm text-gray-500 mt-2">成功推荐的好友</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 积分图表 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-neutral mb-4">积分趋势</h3>
+                            <div class="h-64">
+                                <canvas id="points-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-neutral mb-4">积分来源</h3>
+                            <div class="h-64">
+                                <canvas id="points-source-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 热门礼品 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral">热门礼品</h3>
+                            <a href="#" class="text-primary hover:text-blue-700 text-sm" data-page="shop">查看全部</a>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="popular-gifts">
+                            <!-- 热门礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 最近活动 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-neutral mb-4">最近活动</h3>
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活动</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">积分变动</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="activity-log">
+                                        <!-- 活动记录将通过JS动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 礼品商城 -->
+                <div id="shop-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">礼品商城</h1>
+                        <p class="text-gray-600">使用您的积分兑换精美礼品</p>
+                    </div>
+                    
+                    <!-- 筛选器 -->
+                    <div class="bg-white rounded-lg shadow p-4 mb-6">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="flex-grow">
+                                <div class="relative">
+                                    <input type="text" id="gift-search" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="搜索礼品...">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <select id="gift-filter" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="all">所有礼品</option>
+                                    <option value="available">可兑换</option>
+                                    <option value="unavailable">已兑完</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select id="gift-sort" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="default">默认排序</option>
+                                    <option value="points-asc">积分从低到高</option>
+                                    <option value="points-desc">积分从高到低</option>
+                                    <option value="newest">最新上架</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 初级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                初级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">500-1000积分</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="初级礼品-container">
+                            <!-- 初级礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 中级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                中级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">1001-2000积分</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="中级礼品-container">
+                            <!-- 中级礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 高级礼品区域 -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-neutral flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-2">
+                                    <i class="fa fa-star"></i>
+                                </span>
+                                高级区域
+                            </h3>
+                            <span class="text-sm text-gray-500">2001积分以上</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="高级礼品-container">
+                            <!-- 高级礼品将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 无结果提示 -->
+                    <div id="no-gifts-found" class="hidden text-center py-12">
+                        <div class="text-gray-400 text-5xl mb-4">
+                            <i class="fa fa-search"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2">未找到礼品</h3>
+                        <p class="text-gray-500">请尝试使用其他搜索条件</p>
+                    </div>
+                </div>
+                
+                <!-- 礼品详情 -->
+                <div id="gift-detail-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <button class="flex items-center text-primary hover:text-blue-700 mb-4" id="back-to-shop">
+                            <i class="fa fa-arrow-left mr-2"></i> 返回礼品商城
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 礼品图片 -->
+                            <div class="bg-gray-50 p-6 flex items-center justify-center">
+                                <img id="gift-detail-image" src="" alt="礼品图片" class="max-h-80 object-contain">
+                            </div>
+                            
+                            <!-- 礼品信息 -->
+                            <div class="p-6">
+                                <span id="gift-detail-status" class="inline-block px-3 py-1 rounded-full text-sm font-medium mb-3"></span>
+                                <h1 id="gift-detail-name" class="text-2xl font-bold text-neutral mb-2"></h1>
+                                <p id="gift-detail-description" class="text-gray-600 mb-6"></p>
+                                
+                                <div class="flex items-center mb-6">
+                                    <span class="text-3xl font-bold text-primary mr-2" id="gift-detail-points"></span>
+                                    <span class="text-gray-600">积分</span>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <span class="text-gray-600">库存: </span>
+                                    <span id="gift-detail-stock" class="font-medium"></span>
+                                </div>
+                                
+                                <div class="flex items-center mb-6">
+                                    <span class="text-gray-600 mr-4">您的积分: </span>
+                                    <span id="user-points-detail" class="font-medium text-primary"></span>
+                                </div>
+                                
+                                <button id="redeem-btn" class="w-full btn-secondary py-3 text-lg">
+                                    立即兑换
+                                </button>
+                                
+                                <button id="redeem-disabled-btn" class="w-full bg-gray-300 text-gray-500 py-3 text-lg rounded-md cursor-not-allowed hidden">
+                                    积分不足
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 兑换记录 -->
+                <div id="history-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">兑换记录</h1>
+                        <p class="text-gray-600">查看您的礼品兑换历史</p>
+                    </div>
+                    
+                    <!-- 筛选器 -->
+                    <div class="bg-white rounded-lg shadow p-4 mb-6">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div>
+                                <select id="history-filter" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="all">所有记录</option>
+                                    <option value="pending">待处理</option>
+                                    <option value="completed">已完成</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 记录列表 -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请日期</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">礼品</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">消耗积分</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="history-list">
+                                    <!-- 记录将通过JS动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 无记录提示 -->
+                    <div id="no-history" class="hidden text-center py-12">
+                        <div class="text-gray-400 text-5xl mb-4">
+                            <i class="fa fa-history"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2">暂无兑换记录</h3>
+                        <p class="text-gray-500 mb-4">您还没有兑换过任何礼品</p>
+                        <a href="#" class="btn-primary" data-page="shop">去兑换礼品</a>
+                    </div>
+                </div>
+                
+                <!-- 邀请好友 -->
+                <div id="invite-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">邀请好友</h1>
+                        <p class="text-gray-600">邀请好友加入，双方都能获得积分奖励</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 左侧：邀请信息 -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                                <h2 class="text-xl font-semibold text-neutral mb-4">邀请奖励规则</h2>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start">
+                                        <div class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3 mt-0.5">
+                                            <i class="fa fa-check text-sm"></i>
+                                        </div>
+                                        <p class="text-gray-700">您邀请的好友成功注册并完成首次登录，您将获得<span class="font-semibold text-primary">50积分</span>奖励</p>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3 mt-0.5">
+                                            <i class="fa fa-check text-sm"></i>
+                                        </div>
+                                        <p class="text-gray-700">您邀请的好友首次兑换礼品，您将获得额外<span class="font-semibold text-primary">100积分</span>奖励</p>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3 mt-0.5">
+                                            <i class="fa fa-check text-sm"></i>
+                                        </div>
+                                        <p class="text-gray-700">被邀请的好友注册成功后，将立即获得<span class="font-semibold text-primary">30积分</span>的新人奖励</p>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3 mt-0.5">
+                                            <i class="fa fa-info text-sm"></i>
+                                        </div>
+                                        <p class="text-gray-700">邀请奖励无上限，邀请越多，奖励越多！</p>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h2 class="text-xl font-semibold text-neutral mb-4">邀请方式</h2>
+                                
+                                <!-- 邀请链接 -->
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">您的专属邀请链接</label>
+                                    <div class="flex">
+                                        <input type="text" id="invite-link" class="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" readonly>
+                                        <button id="copy-link-btn" class="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition-colors duration-300">
+                                            <i class="fa fa-copy mr-1"></i> 复制
+                                        </button>
+                                    </div>
+                                    <p class="mt-2 text-sm text-gray-500">复制此链接分享给好友，好友通过此链接注册即可获得奖励</p>
+                                </div>
+                                
+                                <!-- 社交媒体分享 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">分享到社交媒体</label>
+                                    <div class="flex space-x-4">
+                                        <button class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors duration-300">
+                                            <i class="fa fa-facebook"></i>
+                                        </button>
+                                        <button class="w-10 h-10 rounded-full bg-blue-400 text-white flex items-center justify-center hover:bg-blue-500 transition-colors duration-300">
+                                            <i class="fa fa-twitter"></i>
+                                        </button>
+                                        <button class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition-colors duration-300">
+                                            <i class="fa fa-weibo"></i>
+                                        </button>
+                                        <button class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors duration-300">
+                                            <i class="fa fa-whatsapp"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：邀请统计 -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                                <h2 class="text-xl font-semibold text-neutral mb-4">邀请统计</h2>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">已邀请好友</span>
+                                        <span class="text-xl font-bold text-neutral" id="invited-count">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">成功注册</span>
+                                        <span class="text-xl font-bold text-neutral" id="registered-count">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">获得奖励积分</span>
+                                        <span class="text-xl font-bold text-primary" id="reward-points">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h2 class="text-xl font-semibold text-neutral mb-4">邀请记录</h2>
+                                <div class="space-y-4 max-h-80 overflow-y-auto pr-2" id="invite-history">
+                                    <!-- 邀请记录将通过JS动态加载 -->
+                                </div>
+                                <div id="no-invite-history" class="text-center py-4">
+                                    <p class="text-gray-500">暂无邀请记录</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 个人中心 -->
+                <div id="profile-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">个人中心</h1>
+                        <p class="text-gray-600">管理您的账户信息</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 左侧：个人信息 -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-lg shadow overflow-hidden">
+                                <div class="bg-primary px-6 py-4">
+                                    <h2 class="text-xl font-semibold text-white">个人信息</h2>
+                                </div>
+                                <div class="p-6">
+                                    <form id="profile-form">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label for="profile-username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                                                <input type="text" id="profile-username" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            </div>
+                                            <div>
+                                                <label for="profile-email" class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                                                <input type="email" id="profile-email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            </div>
+                                        </div>
+                                        <div class="mb-6">
+                                            <label for="profile-password" class="block text-sm font-medium text-gray-700 mb-1">密码 (留空表示不修改)</label>
+                                            <input type="password" id="profile-password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入新密码">
+                                        </div>
+                                        <div class="flex justify-end">
+                                            <button type="submit" class="btn-primary">保存修改</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：账户概览 -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                                <h2 class="text-lg font-semibold text-neutral mb-4">账户概览</h2>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">用户ID</span>
+                                        <span class="font-medium text-neutral" id="user-id">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">注册日期</span>
+                                        <span class="font-medium text-neutral" id="join-date">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">当前积分</span>
+                                        <span class="font-bold text-primary" id="current-points">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                                        <span class="text-gray-600">推荐人</span>
+                                        <span class="font-medium text-neutral" id="referrer">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h2 class="text-lg font-semibold text-neutral mb-4">积分明细</h2>
+                                <div class="space-y-3 max-h-80 overflow-y-auto pr-2" id="points-history">
+                                    <!-- 积分记录将通过JS动态加载 -->
+                                </div>
+                                <div id="no-points-history" class="text-center py-4">
+                                    <p class="text-gray-500">暂无积分记录</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 管理中心 -->
+                <div id="admin-page" class="page-content hidden animate-fade-in">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-neutral">管理中心</h1>
+                        <p class="text-gray-600">管理用户、礼品和积分</p>
+                    </div>
+                    
+                    <!-- 管理选项卡 -->
+                    <div class="bg-white rounded-lg shadow mb-6">
+                        <div class="border-b">
+                            <nav class="flex -mb-px">
+                                <button class="admin-tab active py-4 px-6 border-b-2 border-primary text-primary font-medium" data-tab="users">用户管理</button>
+                                <button class="admin-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-primary" data-tab="gifts">礼品管理</button>
+                                <button class="admin-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-primary" data-tab="points">积分管理</button>
+                                <button class="admin-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-primary" data-tab="redemptions">兑换管理</button>
+                                <button class="admin-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-primary" data-tab="settings">区域设置</button>
+                            </nav>
+                        </div>
+                        
+                        <!-- 用户管理 -->
+                        <div class="admin-content active p-6" id="users-tab">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="relative w-64">
+                                    <input type="text" id="user-search" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="搜索用户...">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <button class="btn-primary" id="add-user-btn">
+                                    <i class="fa fa-plus mr-1"></i> 添加用户
+                                </button>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">积分</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册日期</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="users-list">
+                                        <!-- 用户列表将通过JS动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- 礼品管理 -->
+                        <div class="admin-content hidden p-6" id="gifts-tab">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="relative w-64">
+                                    <input type="text" id="admin-gift-search" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="搜索礼品...">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <button class="btn-primary" id="add-gift-btn">
+                                    <i class="fa fa-plus mr-1"></i> 添加礼品
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="admin-gifts-list">
+                                <!-- 礼品列表将通过JS动态加载 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 积分管理 -->
+                        <div class="admin-content hidden p-6" id="points-tab">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                                <h3 class="text-lg font-semibold text-neutral mb-4">发放积分</h3>
+                                <form id="award-points-form">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div>
+                                            <label for="user-select" class="block text-sm font-medium text-gray-700 mb-1">选择用户</label>
+                                            <select id="user-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                <option value="">-- 选择用户 --</option>
+                                                <!-- 用户选项将通过JS动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="points-amount" class="block text-sm font-medium text-gray-700 mb-1">积分数量</label>
+                                            <input type="number" id="points-amount" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="1">
+                                        </div>
+                                        <div>
+                                            <label for="points-reason" class="block text-sm font-medium text-gray-700 mb-1">发放原因</label>
+                                            <input type="text" id="points-reason" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="btn-primary">发放积分</button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-neutral mb-4">积分记录</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">积分变动</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">原因</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200" id="admin-points-history">
+                                            <!-- 积分记录将通过JS动态加载 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 兑换管理 -->
+                        <div class="admin-content hidden p-6" id="redemptions-tab">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="relative w-64">
+                                    <input type="text" id="redemption-search" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="搜索兑换记录...">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <select id="redemption-filter" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="all">所有记录</option>
+                                        <option value="pending">待处理</option>
+                                        <option value="completed">已完成</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请日期</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">礼品</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">积分</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="admin-redemptions-list">
+                                        <!-- 兑换记录将通过JS动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- 区域设置 -->
+                        <div class="admin-content hidden p-6" id="settings-tab">
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-neutral mb-4">积分区域设置</h3>
+                                <p class="text-gray-600 mb-6">设置不同积分区域的范围，系统将根据这些范围对礼品进行分类</p>
+                                
+                                <form id="settings-form" class="bg-white rounded-lg border border-gray-200 p-6">
+                                    <!-- 初级区域设置 -->
+                                    <div class="mb-6">
+                                        <h4 class="text-md font-medium text-neutral mb-3 flex items-center">
+                                            <span class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                                                <i class="fa fa-star text-xs"></i>
+                                            </span>
+                                            初级区域
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="primary-min" class="block text-sm font-medium text-gray-700 mb-1">最低积分</label>
+                                                <input type="number" id="primary-min" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0">
+                                            </div>
+                                            <div>
+                                                <label for="primary-max" class="block text-sm font-medium text-gray-700 mb-1">最高积分</label>
+                                                <input type="number" id="primary-max" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 中级区域设置 -->
+                                    <div class="mb-6">
+                                        <h4 class="text-md font-medium text-neutral mb-3 flex items-center">
+                                            <span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                                <i class="fa fa-star text-xs"></i>
+                                            </span>
+                                            中级区域
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="secondary-min" class="block text-sm font-medium text-gray-700 mb-1">最低积分</label>
+                                                <input type="number" id="secondary-min" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0">
+                                            </div>
+                                            <div>
+                                                <label for="secondary-max" class="block text-sm font-medium text-gray-700 mb-1">最高积分</label>
+                                                <input type="number" id="secondary-max" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 高级区域设置 -->
+                                    <div class="mb-6">
+                                        <h4 class="text-md font-medium text-neutral mb-3 flex items-center">
+                                            <span class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-2">
+                                                <i class="fa fa-star text-xs"></i>
+                                            </span>
+                                            高级区域
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="tertiary-min" class="block text-sm font-medium text-gray-700 mb-1">最低积分</label>
+                                                <input type="number" id="tertiary-min" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0">
+                                            </div>
+                                            <div>
+                                                <label for="tertiary-max" class="block text-sm font-medium text-gray-700 mb-1">最高积分</label>
+                                                <input type="number" id="tertiary-max" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0" placeholder="不设置表示无上限">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="btn-primary">保存设置</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <!-- 页脚 -->
+            <footer class="bg-white border-t border-gray-200 py-6">
+                <div class="container mx-auto px-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div class="mb-4 md:mb-0">
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d6af474b12d5439e90ecfa45811fd7b3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260407220134AC8BF5D54B3FFE09D2F0&rrcfp=f06b921b&x-expires=1778162554&x-signature=CcVNdpZnpXr4nNB%2FvKWNdOzVyd0%3D" alt="Logo" class="h-8">
+                        </div>
+                        <div class="text-center md:text-left mb-4 md:mb-0">
+                            <p class="text-gray-600">&copy; 2025 积分兑换礼品系统. 保留所有权利.</p>
+                        </div>
+                        <div class="flex space-x-4">
+                            <a href="#" class="text-gray-600 hover:text-primary">
+                                <i class="fa fa-facebook"></i>
+                            </a>
+                            <a href="#" class="text-gray-600 hover:text-primary">
+                                <i class="fa fa-twitter"></i>
+                            </a>
+                            <a href="#" class="text-gray-600 hover:text-primary">
+                                <i class="fa fa-instagram"></i>
+                            </a>
+                            <a href="#" class="text-gray-600 hover:text-primary">
+                                <i class="fa fa-linkedin"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        
+        <!-- 模态框 -->
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 animate-slide-up">
+                <div class="flex justify-between items-center border-b px-6 py-4">
+                    <h3 class="text-lg font-semibold text-neutral" id="modal-title"></h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="px-6 py-4" id="modal-content">
+                    <!-- 模态框内容将通过JS动态加载 -->
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end rounded-b-lg" id="modal-footer">
+                    <!-- 模态框底部按钮将通过JS动态加载 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 通知提示 -->
+        <div id="toast" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50 max-w-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center mr-3 mt-0.5" id="toast-icon">
+                    <!-- 图标将通过JS动态加载 -->
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-medium text-gray-900" id="toast-title"></h4>
+                    <p class="text-sm text-gray-500 mt-1" id="toast-message"></p>
+                </div>
+                <button id="close-toast" class="ml-4 text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 全局变量
+        let currentUser = null;
+        let users = [];
+        let gifts = [];
+        let redemptions = [];
+        let pointsHistory = [];
+        let pointsSettings = {
+            primary: { min: 500, max: 1000 },
+            secondary: { min: 1001, max: 2000 },
+            tertiary: { min: 2001, max: null }
+        };
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化数据
+            initData();
+            
+            // 绑定事件
+            bindEvents();
+            
+            // 检查是否已登录
+            checkLoginStatus();
+        });
+        
+        // 初始化数据
+        function initData() {
+            // 读取积分区域设置
+            if (localStorage.getItem('pointsSettings')) {
+                pointsSettings = JSON.parse(localStorage.getItem('pointsSettings'));
+            } else {
+                // 默认设置
+                pointsSettings = {
+                    primary: { min: 500, max: 1000 },
+                    secondary: { min: 1001, max: 2000 },
+                    tertiary: { min: 2001, max: null }
+                };
+                localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
+            }
+            
+            // 检查本地存储中是否已有数据
+            if (!localStorage.getItem('users')) {
+                // 创建默认管理员账户
+                const admin = {
+                    id: 'admin1',
+                    username: 'admin',
+                    password: 'admin123',
+                    email: 'admin@example.com',
+                    role: 'admin',
+                    points: 0,
+                    joinDate: new Date().toISOString(),
+                    referrerId: null,
+                    referrals: [],
+                    pointsHistory: []
+                };
+                
+                // 创建示例用户
+                const user1 = {
+                    id: 'user1',
+                    username: 'user1',
+                    password: 'user123',
+                    email: 'user1@example.com',
+                    role: 'user',
+                    points: 1500,
+                    joinDate: new Date().toISOString(),
+                    referrerId: null,
+                    referrals: [],
+                    pointsHistory: [
+                        {
+                            id: 'ph1',
+                            userId: 'user1',
+                            type: 'earn',
+                            amount: 1000,
+                            description: '初始积分',
+                            date: new Date().toISOString()
+                        },
+                        {
+                            id: 'ph2',
+                            userId: 'user1',
+                            type: 'earn',
+                            amount: 500,
+                            description: '活动奖励',
+                            date: new Date(Date.now() - 86400000).toISOString()
+                        }
+                    ]
+                };
+                
+                // 保存用户数据
+                users = [admin, user1];
+                localStorage.setItem('users', JSON.stringify(users));
+            } else {
+                users = JSON.parse(localStorage.getItem('users'));
+            }
+            
+            // 检查礼品数据
+            if (!localStorage.getItem('gifts')) {
+                // 创建示例礼品 - 按等级分类
+                gifts = [
+                    // 初级礼品 (500-1000积分)
+                    {
+                        id: 'gift1',
+                        name: '时尚U盘',
+                        description: '高速USB 3.0 U盘，32GB容量，防水防尘',
+                        points: 500,
+                        stock: 20,
+                        image: 'https://p26-doubao-search-sign.byteimg.com/labis/image/ca0729e5ac6ce52a357a7d40699e3347~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=G50V4LRFxlYFJB4dnwwGhIkWOfY%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift2',
+                        name: '精美陶瓷摆件',
+                        description: '创意陶瓷摆件，家居装饰品，增添生活情趣',
+                        points: 800,
+                        stock: 15,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift3',
+                        name: '蓝牙音箱',
+                        description: '便携式蓝牙音箱，重低音效果，户外聚会必备',
+                        points: 1000,
+                        stock: 12,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/27a87d5ce6419724f54053c226de63b1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=4ZwGcLZmF4cOEDRLbrHo8NwSIrA%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    
+                    // 中级礼品 (1001-2000积分)
+                    {
+                        id: 'gift4',
+                        name: '无线蓝牙耳机',
+                        description: '高品质无线蓝牙耳机，支持蓝牙5.0，续航长达24小时',
+                        points: 1200,
+                        stock: 10,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift5',
+                        name: '木质工艺品',
+                        description: '精致木质工艺品，手工雕刻，送礼自用两相宜',
+                        points: 1500,
+                        stock: 8,
+                        image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift6',
+                        name: '智能手环',
+                        description: '多功能智能手环，支持心率监测、睡眠监测、运动计步等功能',
+                        points: 2000,
+                        stock: 5,
+                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    
+                    // 高级礼品 (2001积分以上)
+                    {
+                        id: 'gift7',
+                        name: '智能手表',
+                        description: '多功能智能手表，支持心率监测、GPS定位、运动追踪等功能',
+                        points: 2500,
+                        stock: 3,
+                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    },
+                    {
+                        id: 'gift8',
+                        name: '平板电脑',
+                        description: '高清平板电脑，10英寸屏幕，64GB存储，适合娱乐和工作',
+                        points: 3500,
+                        stock: 2,
+                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
+                        status: 'available',
+                        createDate: new Date().toISOString()
+                    }
+                ];
+                
+                localStorage.setItem('gifts', JSON.stringify(gifts));
+            } else {
+                gifts = JSON.parse(localStorage.getItem('gifts'));
+            }
+            
+            // 检查兑换记录
+            if (!localStorage.getItem('redemptions')) {
+                redemptions = [];
+                localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            } else {
+                redemptions = JSON.parse(localStorage.getItem('redemptions'));
+            }
+            
+            // 检查积分记录
+            if (!localStorage.getItem('pointsHistory')) {
+                pointsHistory = [];
+                
+                // 添加用户的积分记录
+                users.forEach(user => {
+                    if (user.pointsHistory && user.pointsHistory.length > 0) {
+                        pointsHistory.push(...user.pointsHistory);
+                    }
+                });
+                
+                localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            } else {
+                pointsHistory = JSON.parse(localStorage.getItem('pointsHistory'));
+            }
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 登录/注册表单切换
+            document.getElementById('login-tab').addEventListener('click', function() {
+                showLoginForm();
+            });
+            
+            document.getElementById('register-tab').addEventListener('click', function() {
+                showRegisterForm();
+            });
+            
+            document.getElementById('switch-to-register').addEventListener('click', function() {
+                showRegisterForm();
+            });
+            
+            document.getElementById('switch-to-login').addEventListener('click', function() {
+                showLoginForm();
+            });
+            
+            // 登录按钮
+            document.getElementById('login-btn').addEventListener('click', function() {
+                handleLogin();
+            });
+            
+            // 注册按钮
+            document.getElementById('register-btn').addEventListener('click', function() {
+                handleRegister();
+            });
+            
+            // 退出登录
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                handleLogout();
+            });
+            
+            // 用户下拉菜单
+            document.getElementById('user-dropdown').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('user-menu').classList.toggle('hidden');
+            });
+            
+            // 移动端菜单按钮
+            document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+                document.getElementById('mobile-menu').classList.toggle('hidden');
+            });
+            
+            // 导航链接
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    showPage(page);
+                    
+                    // 关闭移动端菜单
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                });
+            });
+            
+            // 返回礼品商城按钮
+            document.getElementById('back-to-shop').addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('shop');
+            });
+            
+            // 兑换按钮
+            document.getElementById('redeem-btn').addEventListener('click', function() {
+                handleRedeem();
+            });
+            
+            // 礼品搜索
+            document.getElementById('gift-search').addEventListener('input', function() {
+                filterGifts();
+            });
+            
+            // 礼品筛选
+            document.getElementById('gift-filter').addEventListener('change', function() {
+                filterGifts();
+            });
+            
+            // 礼品排序
+            document.getElementById('gift-sort').addEventListener('change', function() {
+                filterGifts();
+            });
+            
+            // 复制邀请链接
+            document.getElementById('copy-link-btn').addEventListener('click', function() {
+                copyInviteLink();
+            });
+            
+            // 个人资料表单提交
+            document.getElementById('profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateProfile();
+            });
+            
+            // 管理员选项卡
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    showAdminTab(tabId);
+                });
+            });
+            
+            // 添加用户按钮
+            document.getElementById('add-user-btn').addEventListener('click', function() {
+                showAddUserModal();
+            });
+            
+            // 添加礼品按钮
+            document.getElementById('add-gift-btn').addEventListener('click', function() {
+                showAddGiftModal();
+            });
+            
+            // 发放积分表单提交
+            document.getElementById('award-points-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                awardPoints();
+            });
+            
+            // 保存积分区域设置
+            document.getElementById('settings-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                savePointsSettings();
+            });
+            
+            // 关闭模态框
+            document.getElementById('close-modal').addEventListener('click', function() {
+                hideModal();
+            });
+            
+            // 关闭通知
+            document.getElementById('close-toast').addEventListener('click', function() {
+                hideToast();
+            });
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', function() {
+                document.getElementById('user-menu').classList.add('hidden');
+            });
+            
+            // 点击模态框外部关闭模态框
+            document.getElementById('modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideModal();
+                }
+            });
+        }
+        
+        // 显示登录表单
+        function showLoginForm() {
+            document.getElementById('login-tab').classList.add('text-primary', 'border-primary');
+            document.getElementById('login-tab').classList.remove('text-gray-500');
+            document.getElementById('register-tab').classList.add('text-gray-500');
+            document.getElementById('register-tab').classList.remove('text-primary', 'border-primary');
+            
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            
+            // 清除错误提示
+            hideAuthError();
+        }
+        
+        // 显示注册表单
+        function showRegisterForm() {
+            document.getElementById('register-tab').classList.add('text-primary', 'border-primary');
+            document.getElementById('register-tab').classList.remove('text-gray-500');
+            document.getElementById('login-tab').classList.add('text-gray-500');
+            document.getElementById('login-tab').classList.remove('text-primary', 'border-primary');
+            
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('login-form').classList.add('hidden');
+            
+            // 清除错误提示
+            hideAuthError();
+        }
+        
+        // 显示认证错误
+        function showAuthError(message) {
+            const errorElement = document.getElementById('auth-error');
+            const errorMessage = document.getElementById('error-message');
+            
+            errorMessage.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+        
+        // 隐藏认证错误
+        function hideAuthError() {
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+        
+        // 处理登录
+        function handleLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            
+            // 验证输入
+            if (!username || !password) {
+                showAuthError('请输入用户名和密码');
+                return;
+            }
+            
+            // 查找用户
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (!user) {
+                showAuthError('用户名或密码错误');
+                return;
+            }
+            
+            // 设置当前用户
+            currentUser = user;
+            
+            // 保存登录状态
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            
+            // 显示主应用
+            showMainApp();
+        }
+        
+        // 检查并修复本地存储数据
+        function checkAndFixLocalStorage() {
+            try {
+                // 检查用户数据
+                if (!localStorage.getItem('users')) {
+                    initData();
+                } else {
+                    // 尝试解析用户数据
+                    try {
+                        users = JSON.parse(localStorage.getItem('users'));
+                    } catch (e) {
+                        // 如果解析失败，重新初始化数据
+                        localStorage.removeItem('users');
+                        localStorage.removeItem('currentUser');
+                        localStorage.removeItem('gifts');
+                        localStorage.removeItem('redemptions');
+                        localStorage.removeItem('pointsHistory');
+                        initData();
+                    }
+                }
+            } catch (e) {
+                // 如果出现任何错误，重新初始化数据
+                localStorage.clear();
+                initData();
+            }
+        }
+        
+        // 处理注册
+        function handleRegister() {
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+            const referralId = document.getElementById('register-referral').value.trim();
+            
+            // 验证输入
+            if (!username || !email || !password) {
+                showAuthError('请填写所有必填字段');
+                return;
+            }
+            
+            // 检查用户名是否已存在
+            if (users.some(u => u.username === username)) {
+                showAuthError('用户名已存在');
+                return;
+            }
+            
+            // 检查邮箱是否已存在
+            if (users.some(u => u.email === email)) {
+                showAuthError('邮箱已被注册');
+                return;
+            }
+            
+            // 创建新用户
+            const newUser = {
+                id: 'user' + Date.now(),
+                username: username,
+                password: password,
+                email: email,
+                role: 'user',
+                points: 30, // 注册奖励积分
+                joinDate: new Date().toISOString(),
+                referrerId: referralId || null,
+                referrals: [],
+                pointsHistory: [
+                    {
+                        id: 'ph' + Date.now(),
+                        userId: 'user' + Date.now(),
+                        type: 'earn',
+                        amount: 30,
+                        description: '注册奖励',
+                        date: new Date().toISOString()
+                    }
+                ]
+            };
+            
+            // 添加积分记录
+            const pointsRecord = {
+                id: 'ph' + Date.now(),
+                userId: newUser.id,
+                type: 'earn',
+                amount: 30,
+                description: '注册奖励',
+                date: new Date().toISOString()
+            };
+            
+            pointsHistory.push(pointsRecord);
+            
+            // 处理推荐奖励
+            if (referralId) {
+                const referrer = users.find(u => u.id === referralId);
+                
+                if (referrer) {
+                    // 给推荐人添加积分
+                    referrer.points += 50;
+                    referrer.referrals.push(newUser.id);
+                    
+                    // 添加推荐人积分记录
+                    const referrerPointsRecord = {
+                        id: 'ph' + (Date.now() + 1),
+                        userId: referrer.id,
+                        type: 'earn',
+                        amount: 50,
+                        description: '推荐好友注册奖励',
+                        date: new Date().toISOString()
+                    };
+                    
+                    referrer.pointsHistory.push(referrerPointsRecord);
+                    pointsHistory.push(referrerPointsRecord);
+                }
+            }
+            
+            // 添加新用户
+            users.push(newUser);
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 自动登录新用户
+            currentUser = newUser;
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            
+            // 显示主应用
+            showMainApp();
+        }
+        
+        // 处理退出登录
+        function handleLogout() {
+            // 清除当前用户
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            
+            // 显示登录页面
+            showAuthPage();
+        }
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            // 先检查并修复本地存储数据
+            checkAndFixLocalStorage();
+            
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    
+                    // 更新用户数据（以防其他地方修改了用户信息）
+                    const updatedUser = users.find(u => u.id === currentUser.id);
+                    if (updatedUser) {
+                        currentUser = updatedUser;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    } else {
+                        // 如果找不到用户，清除登录状态
+                        localStorage.removeItem('currentUser');
+                        showAuthPage();
+                        return;
+                    }
+                    
+                    showMainApp();
+                } catch (e) {
+                    // 如果解析失败，清除登录状态
+                    localStorage.removeItem('currentUser');
+                    showAuthPage();
+                }
+            } else {
+                showAuthPage();
+            }
+        }
+        
+        // 显示认证页面
+        function showAuthPage() {
+            document.getElementById('auth-page').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+        
+        // 显示主应用
+        function showMainApp() {
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // 更新用户信息
+            updateUserInfo();
+            
+            // 显示首页
+            showPage('dashboard');
+            
+            // 检查用户角色，显示/隐藏管理员功能
+            updateAdminAccess();
+        }
+        
+        // 更新用户信息
+        function updateUserInfo() {
+            if (!currentUser) return;
+            
+            // 更新导航栏用户信息
+            document.getElementById('user-name').textContent = currentUser.username;
+            document.getElementById('user-points').textContent = currentUser.points;
+            
+            // 更新欢迎信息
+            document.getElementById('welcome-name').textContent = currentUser.username;
+            document.getElementById('welcome-points').textContent = currentUser.points;
+            
+            // 更新个人中心信息
+            document.getElementById('profile-username').value = currentUser.username;
+            document.getElementById('profile-email').value = currentUser.email;
+            document.getElementById('user-id').textContent = currentUser.id;
+            document.getElementById('join-date').textContent = formatDate(currentUser.joinDate);
+            document.getElementById('current-points').textContent = currentUser.points;
+            
+            // 更新推荐人信息
+            if (currentUser.referrerId) {
+                const referrer = users.find(u => u.id === currentUser.referrerId);
+                document.getElementById('referrer').textContent = referrer ? referrer.username : '未知';
+            } else {
+                document.getElementById('referrer').textContent = '无';
+            }
+            
+            // 更新邀请链接
+            const inviteLink = `${window.location.origin}${window.location.pathname}?referrer=${currentUser.id}`;
+            document.getElementById('invite-link').value = inviteLink;
+            
+            // 更新用户选择下拉框（管理员页面）
+            updateUserSelect();
+        }
+        
+        // 更新管理员访问权限
+        function updateAdminAccess() {
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            
+            // 显示/隐藏管理员菜单项
+            document.querySelectorAll('.admin-only').forEach(element => {
+                if (isAdmin) {
+                    element.classList.remove('hidden');
+                } else {
+                    element.classList.add('hidden');
+                }
+            });
+        }
+        
+        // 显示页面
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // 显示选中页面
+            document.getElementById(`${pageId}-page`).classList.remove('hidden');
+            
+            // 更新导航链接状态
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('text-primary', 'font-medium');
+                    if (link.classList.contains('mobile-nav-link')) {
+                        link.classList.add('bg-blue-50');
+                    }
+                } else {
+                    link.classList.remove('text-primary', 'font-medium');
+                    if (link.classList.contains('mobile-nav-link')) {
+                        link.classList.remove('bg-blue-50');
+                    }
+                }
+            });
+            
+            // 根据页面ID执行特定操作
+            switch (pageId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'shop':
+                    loadShop();
+                    break;
+                case 'history':
+                    loadHistory();
+                    break;
+                case 'invite':
+                    loadInvitePage();
+                    break;
+                case 'profile':
+                    loadProfilePage();
+                    break;
+                case 'admin':
+                    loadAdminPage();
+                    break;
+            }
+        }
+        
+        // 加载仪表盘
+        function loadDashboard() {
+            // 更新统计数据
+            document.getElementById('total-points').textContent = currentUser.points;
+            document.getElementById('total-gifts').textContent = redemptions.filter(r => r.userId === currentUser.id && r.status === 'completed').length;
+            document.getElementById('total-referrals').textContent = currentUser.referrals.length;
+            
+            // 加载热门礼品
+            loadPopularGifts();
+            
+            // 加载活动日志
+            loadActivityLog();
+            
+            // 加载积分图表
+            loadPointsChart();
+        }
+        
+        // 加载热门礼品
+        function loadPopularGifts() {
+            const container = document.getElementById('popular-gifts');
+            container.innerHTML = '';
+            
+            // 获取前4个可用礼品
+            const popularGifts = gifts.filter(g => g.status === 'available').slice(0, 4);
+            
+            popularGifts.forEach(gift => {
+                const giftCard = createGiftCard(gift);
+                container.appendChild(giftCard);
+            });
+        }
+        
+        // 加载活动日志
+        function loadActivityLog() {
+            const container = document.getElementById('activity-log');
+            container.innerHTML = '';
+            
+            // 获取用户的积分记录
+            const userPointsHistory = pointsHistory.filter(ph => ph.userId === currentUser.id);
+            
+            // 获取用户的兑换记录
+            const userRedemptions = redemptions.filter(r => r.userId === currentUser.id);
+            
+            // 合并记录并按日期排序
+            const activities = [
+                ...userPointsHistory.map(ph => ({
+                    date: ph.date,
+                    type: 'points',
+                    data: ph
+                })),
+                ...userRedemptions.map(r => ({
+                    date: r.requestDate,
+                    type: 'redemption',
+                    data: r
+                }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+            
+            if (activities.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">暂无活动记录</td>
+                `;
+                container.appendChild(row);
+                return;
+            }
+            
+            activities.forEach(activity => {
+                const row = document.createElement('tr');
+                
+                if (activity.type === 'points') {
+                    const ph = activity.data;
+                    const description = ph.description;
+                    const pointsChange = ph.type === 'earn' ? `+${ph.amount}` : `-${ph.amount}`;
+                    const pointsClass = ph.type === 'earn' ? 'text-green-600' : 'text-red-600';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(ph.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${description}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${pointsClass} font-medium">${pointsChange}</td>
+                    `;
+                } else if (activity.type === 'redemption') {
+                    const r = activity.data;
+                    const gift = gifts.find(g => g.id === r.giftId);
+                    const giftName = gift ? gift.name : '未知礼品';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(r.requestDate)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">兑换礼品: ${giftName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">-${r.points}</td>
+                    `;
+                }
+                
+                container.appendChild(row);
+            });
+        }
+        
+        // 加载积分图表
+        function loadPointsChart() {
+            // 积分趋势图
+            const pointsChartCtx = document.getElementById('points-chart').getContext('2d');
+            
+            // 获取用户的积分记录并按日期排序
+            const userPointsHistory = pointsHistory
+                .filter(ph => ph.userId === currentUser.id)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // 生成过去7天的日期标签
+            const dates = [];
+            const pointsData = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(formatDateShort(date));
+                
+                // 计算到这一天为止的总积分
+                const pointsUpToDate = userPointsHistory
+                    .filter(ph => new Date(ph.date) <= date)
+                    .reduce((total, ph) => {
+                        return total + (ph.type === 'earn' ? ph.amount : -ph.amount);
+                    }, 0);
+                
+                pointsData.push(pointsUpToDate);
+            }
+            
+            // 创建图表
+            if (window.pointsChart) {
+                window.pointsChart.destroy();
+            }
+            
+            window.pointsChart = new Chart(pointsChartCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '积分余额',
+                        data: pointsData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 积分来源饼图
+            const sourceChartCtx = document.getElementById('points-source-chart').getContext('2d');
+            
+            // 分类积分来源
+            const sources = {};
+            userPointsHistory.forEach(ph => {
+                if (ph.type === 'earn') {
+                    if (!sources[ph.description]) {
+                        sources[ph.description] = 0;
+                    }
+                    sources[ph.description] += ph.amount;
+                }
+            });
+            
+            const sourceLabels = Object.keys(sources);
+            const sourceData = Object.values(sources);
+            
+            // 生成随机颜色
+            const backgroundColors = sourceLabels.map(() => {
+                const r = Math.floor(Math.random() * 200) + 55;
+                const g = Math.floor(Math.random() * 200) + 55;
+                const b = Math.floor(Math.random() * 200) + 55;
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            });
+            
+            // 创建图表
+            if (window.sourceChart) {
+                window.sourceChart.destroy();
+            }
+            
+            window.sourceChart = new Chart(sourceChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sourceLabels,
+                    datasets: [{
+                        data: sourceData,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+        
+        // 加载礼品商城
+        function loadShop() {
+            filterGifts();
+        }
+        
+        // 筛选礼品
+        function filterGifts() {
+            const searchTerm = document.getElementById('gift-search').value.toLowerCase().trim();
+            const filter = document.getElementById('gift-filter').value;
+            const sort = document.getElementById('gift-sort').value;
+            
+            // 筛选礼品
+            let filteredGifts = [...gifts];
+            
+            // 搜索筛选
+            if (searchTerm) {
+                filteredGifts = filteredGifts.filter(gift => 
+                    gift.name.toLowerCase().includes(searchTerm) || 
+                    gift.description.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 状态筛选
+            if (filter === 'available') {
+                filteredGifts = filteredGifts.filter(gift => gift.status === 'available');
+            } else if (filter === 'unavailable') {
+                filteredGifts = filteredGifts.filter(gift => gift.status === 'unavailable');
+            }
+            
+            // 排序
+            switch (sort) {
+                case 'points-asc':
+                    filteredGifts.sort((a, b) => a.points - b.points);
+                    break;
+                case 'points-desc':
+                    filteredGifts.sort((a, b) => b.points - a.points);
+                    break;
+                case 'newest':
+                    filteredGifts.sort((a, b) => new Date(b.createDate) - new Date(a.createDate));
+                    break;
+                default:
+                    // 默认排序（ID排序）
+                    break;
+            }
+            
+            // 显示筛选结果
+            displayGiftsByLevel(filteredGifts);
+        }
+        
+        // 按等级显示礼品
+        function displayGiftsByLevel(giftsToDisplay) {
+            // 清空所有容器
+            document.getElementById('初级礼品-container').innerHTML = '';
+            document.getElementById('中级礼品-container').innerHTML = '';
+            document.getElementById('高级礼品-container').innerHTML = '';
+            
+            // 更新区域积分范围显示
+            document.querySelector('#初级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.primary.min}-${pointsSettings.primary.max}积分`;
+            document.querySelector('#中级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.secondary.min}-${pointsSettings.secondary.max}积分`;
+            document.querySelector('#高级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.tertiary.min}积分以上`;
+            
+            // 按积分范围分类礼品
+            const 初级礼品 = giftsToDisplay.filter(gift => gift.points >= pointsSettings.primary.min && gift.points <= pointsSettings.primary.max);
+            const 中级礼品 = giftsToDisplay.filter(gift => gift.points >= pointsSettings.secondary.min && gift.points <= pointsSettings.secondary.max);
+            const 高级礼品 = giftsToDisplay.filter(gift => {
+                if (pointsSettings.tertiary.max) {
+                    return gift.points >= pointsSettings.tertiary.min && gift.points <= pointsSettings.tertiary.max;
+                } else {
+                    return gift.points >= pointsSettings.tertiary.min;
+                }
+            });
+            
+            // 显示各等级礼品
+            displayGiftsInContainer(初级礼品, '初级礼品-container');
+            displayGiftsInContainer(中级礼品, '中级礼品-container');
+            displayGiftsInContainer(高级礼品, '高级礼品-container');
+            
+            // 显示无结果提示（如果所有区域都没有礼品）
+            if (初级礼品.length === 0 && 中级礼品.length === 0 && 高级礼品.length === 0) {
+                document.getElementById('no-gifts-found').classList.remove('hidden');
+            } else {
+                document.getElementById('no-gifts-found').classList.add('hidden');
+            }
+        }
+        
+        // 在指定容器中显示礼品
+        function displayGiftsInContainer(giftsToDisplay, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (giftsToDisplay.length === 0) {
+                // 如果该区域没有礼品，显示空状态
+                const emptyState = document.createElement('div');
+                emptyState.className = 'col-span-full text-center py-8 text-gray-500';
+                emptyState.innerHTML = '<i class="fa fa-gift text-3xl mb-2"></i><p>该区域暂无礼品</p>';
+                container.appendChild(emptyState);
+            } else {
+                giftsToDisplay.forEach(gift => {
+                    const giftCard = createGiftCard(gift);
+                    container.appendChild(giftCard);
+                });
+            }
+        }
+        
+        // 创建礼品卡片
+        function createGiftCard(gift) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow overflow-hidden card-hover';
+            card.innerHTML = `
+                <div class="relative">
+                    <img src="${gift.image}" alt="${gift.name}" class="w-full h-48 object-contain bg-gray-50 p-4">
+                    ${gift.status === 'available' ? '' : '<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><span class="text-white font-medium px-3 py-1 rounded-full bg-red-600">已兑完</span></div>'}
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-neutral mb-1 truncate">${gift.name}</h3>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">${gift.description}</p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-primary font-bold text-xl">${gift.points}</span>
+                            <span class="text-gray-500 text-sm ml-1">积分</span>
+                        </div>
+                        <button class="btn-primary py-1 px-3 text-sm view-gift-btn" data-gift-id="${gift.id}">查看详情</button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加查看详情事件
+            card.querySelector('.view-gift-btn').addEventListener('click', function() {
+                const giftId = this.getAttribute('data-gift-id');
+                showGiftDetail(giftId);
+            });
+            
+            return card;
+        }
+        
+        // 显示礼品详情
+        function showGiftDetail(giftId) {
+            const gift = gifts.find(g => g.id === giftId);
+            
+            if (!gift) return;
+            
+            // 更新礼品详情页面
+            document.getElementById('gift-detail-image').src = gift.image;
+            document.getElementById('gift-detail-name').textContent = gift.name;
+            document.getElementById('gift-detail-description').textContent = gift.description;
+            document.getElementById('gift-detail-points').textContent = gift.points;
+            document.getElementById('gift-detail-stock').textContent = gift.stock;
+            document.getElementById('user-points-detail').textContent = currentUser.points;
+            
+            // 更新状态标签
+            const statusElement = document.getElementById('gift-detail-status');
+            if (gift.status === 'available') {
+                statusElement.textContent = '可兑换';
+                statusElement.className = 'inline-block px-3 py-1 rounded-full text-sm font-medium mb-3 bg-green-100 text-green-800';
+            } else {
+                statusElement.textContent = '已兑完';
+                statusElement.className = 'inline-block px-3 py-1 rounded-full text-sm font-medium mb-3 bg-red-100 text-red-800';
+            }
+            
+            // 更新兑换按钮状态
+            const redeemBtn = document.getElementById('redeem-btn');
+            const redeemDisabledBtn = document.getElementById('redeem-disabled-btn');
+            
+            if (gift.status === 'available' && currentUser.points >= gift.points) {
+                redeemBtn.classList.remove('hidden');
+                redeemDisabledBtn.classList.add('hidden');
+                redeemBtn.setAttribute('data-gift-id', gift.id);
+            } else {
+                redeemBtn.classList.add('hidden');
+                redeemDisabledBtn.classList.remove('hidden');
+            }
+            
+            // 显示礼品详情页面
+            document.getElementById('shop-page').classList.add('hidden');
+            document.getElementById('gift-detail-page').classList.remove('hidden');
+        }
+        
+        // 处理礼品兑换
+        function handleRedeem() {
+            const giftId = document.getElementById('redeem-btn').getAttribute('data-gift-id');
+            const gift = gifts.find(g => g.id === giftId);
+            
+            if (!gift || gift.status !== 'available' || currentUser.points < gift.points) {
+                showToast('error', '兑换失败', '礼品不可兑换或积分不足');
+                return;
+            }
+            
+            // 创建兑换记录
+            const redemption = {
+                id: 'r' + Date.now(),
+                userId: currentUser.id,
+                giftId: gift.id,
+                points: gift.points,
+                status: 'pending',
+                requestDate: new Date().toISOString(),
+                completeDate: null
+            };
+            
+            // 添加兑换记录
+            redemptions.push(redemption);
+            
+            // 扣除用户积分
+            currentUser.points -= gift.points;
+            
+            // 添加积分记录
+            const pointsRecord = {
+                id: 'ph' + Date.now(),
+                userId: currentUser.id,
+                type: 'spend',
+                amount: gift.points,
+                description: `兑换礼品: ${gift.name}`,
+                date: new Date().toISOString()
+            };
+            
+            currentUser.pointsHistory.push(pointsRecord);
+            pointsHistory.push(pointsRecord);
+            
+            // 减少礼品库存
+            gift.stock -= 1;
+            if (gift.stock <= 0) {
+                gift.status = 'unavailable';
+            }
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 更新当前用户
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // 显示成功提示
+            showToast('success', '兑换成功', `您已成功兑换礼品: ${gift.name}`);
+            
+            // 返回礼品商城
+            showPage('shop');
+        }
+        
+        // 加载兑换记录
+        function loadHistory() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+            
+            // 获取用户的兑换记录
+            const userRedemptions = redemptions
+                .filter(r => r.userId === currentUser.id)
+                .sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+            
+            // 显示无记录提示或记录列表
+            if (userRedemptions.length === 0) {
+                document.getElementById('no-history').classList.remove('hidden');
+                container.parentElement.parentElement.parentElement.classList.add('hidden');
+            } else {
+                document.getElementById('no-history').classList.add('hidden');
+                container.parentElement.parentElement.parentElement.classList.remove('hidden');
+                
+                userRedemptions.forEach(redemption => {
+                    const gift = gifts.find(g => g.id === redemption.giftId);
+                    const giftName = gift ? gift.name : '未知礼品';
+                    
+                    const row = document.createElement('tr');
+                    
+                    // 状态标签
+                    let statusBadge = '';
+                    if (redemption.status === 'pending') {
+                        statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">待处理</span>';
+                    } else {
+                        statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已完成</span>';
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(redemption.requestDate)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${giftName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">${redemption.points}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${statusBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${redemption.status === 'pending' ? 
+                                '<button class="text-red-600 hover:text-red-800 cancel-redemption-btn" data-id="' + redemption.id + '">取消</button>' : 
+                                (redemption.completeDate ? formatDate(redemption.completeDate) : '-')
+                            }
+                        </td>
+                    `;
+                    
+                    container.appendChild(row);
+                });
+                
+                // 添加取消兑换事件
+                document.querySelectorAll('.cancel-redemption-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const redemptionId = this.getAttribute('data-id');
+                        cancelRedemption(redemptionId);
+                    });
+                });
+            }
+        }
+        
+        // 取消兑换
+        function cancelRedemption(redemptionId) {
+            const redemption = redemptions.find(r => r.id === redemptionId);
+            
+            if (!redemption || redemption.status !== 'pending') {
+                showToast('error', '操作失败', '无法取消此兑换记录');
+                return;
+            }
+            
+            // 恢复用户积分
+            currentUser.points += redemption.points;
+            
+            // 添加积分记录
+            const pointsRecord = {
+                id: 'ph' + Date.now(),
+                userId: currentUser.id,
+                type: 'earn',
+                amount: redemption.points,
+                description: '取消兑换礼品',
+                date: new Date().toISOString()
+            };
+            
+            currentUser.pointsHistory.push(pointsRecord);
+            pointsHistory.push(pointsRecord);
+            
+            // 恢复礼品库存
+            const gift = gifts.find(g => g.id === redemption.giftId);
+            if (gift) {
+                gift.stock += 1;
+                gift.status = 'available';
+            }
+            
+            // 删除兑换记录
+            redemptions = redemptions.filter(r => r.id !== redemptionId);
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 更新当前用户
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // 显示成功提示
+            showToast('success', '操作成功', '已取消兑换');
+            
+            // 重新加载兑换记录
+            loadHistory();
+        }
+        
+        // 加载邀请页面
+        function loadInvitePage() {
+            // 更新邀请统计
+            document.getElementById('invited-count').textContent = currentUser.referrals.length;
+            
+            // 计算成功注册的数量
+            const registeredCount = currentUser.referrals.filter(referralId => {
+                return users.some(user => user.id === referralId);
+            }).length;
+            
+            document.getElementById('registered-count').textContent = registeredCount;
+            
+            // 计算获得的奖励积分
+            const rewardPoints = pointsHistory
+                .filter(ph => ph.userId === currentUser.id && (ph.description.includes('推荐好友') || ph.description.includes('邀请')))
+                .reduce((total, ph) => total + ph.amount, 0);
+            
+            document.getElementById('reward-points').textContent = rewardPoints;
+            
+            // 加载邀请记录
+            loadInviteHistory();
+        }
+        
+        // 加载邀请记录
+        function loadInviteHistory() {
+            const container = document.getElementById('invite-history');
+            container.innerHTML = '';
+            
+            if (currentUser.referrals.length === 0) {
+                document.getElementById('no-invite-history').classList.remove('hidden');
+                container.classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('no-invite-history').classList.add('hidden');
+            container.classList.remove('hidden');
+            
+            // 获取被推荐用户的信息
+            currentUser.referrals.forEach(referralId => {
+                const referredUser = users.find(u => u.id === referralId);
+                
+                if (referredUser) {
+                    const referralItem = document.createElement('div');
+                    referralItem.className = 'flex items-center justify-between pb-3 border-b border-gray-100';
+                    
+                    referralItem.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 mr-3">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${referredUser.username}</p>
+                                <p class="text-xs text-gray-500">注册于 ${formatDate(referredUser.joinDate)}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-medium text-green-600">已注册</span>
+                    `;
+                    
+                    container.appendChild(referralItem);
+                }
+            });
+        }
+        
+        // 复制邀请链接
+        function copyInviteLink() {
+            const inviteLink = document.getElementById('invite-link');
+            
+            // 选择文本
+            inviteLink.select();
+            inviteLink.setSelectionRange(0, 99999); // 兼容移动设备
+            
+            // 复制文本
+            document.execCommand('copy');
+            
+            // 取消选择
+            window.getSelection().removeAllRanges();
+            
+            // 显示成功提示
+            showToast('success', '复制成功', '邀请链接已复制到剪贴板');
+        }
+        
+        // 加载个人中心页面
+        function loadProfilePage() {
+            // 更新积分明细
+            loadPointsHistory();
+        }
+        
+        // 加载积分明细
+        function loadPointsHistory() {
+            const container = document.getElementById('points-history');
+            container.innerHTML = '';
+            
+            if (currentUser.pointsHistory.length === 0) {
+                document.getElementById('no-points-history').classList.remove('hidden');
+                container.classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('no-points-history').classList.add('hidden');
+            container.classList.remove('hidden');
+            
+            // 按日期排序
+            const sortedHistory = [...currentUser.pointsHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedHistory.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between pb-3 border-b border-gray-100';
+                
+                const typeIcon = record.type === 'earn' ? 
+                    '<i class="fa fa-arrow-down text-green-600"></i>' : 
+                    '<i class="fa fa-arrow-up text-red-600"></i>';
+                
+                const amountClass = record.type === 'earn' ? 'text-green-600' : 'text-red-600';
+                const amountSign = record.type === 'earn' ? '+' : '-';
+                
+                item.innerHTML = `
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">${record.description}</p>
+                        <p class="text-xs text-gray-500">${formatDate(record.date)}</p>
+                    </div>
+                    <div class="flex items-center ${amountClass} font-medium">
+                        ${typeIcon}
+                        <span class="ml-1">${amountSign}${record.amount}</span>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // 更新个人资料
+        function updateProfile() {
+            const username = document.getElementById('profile-username').value.trim();
+            const email = document.getElementById('profile-email').value.trim();
+            const password = document.getElementById('profile-password').value.trim();
+            
+            // 验证输入
+            if (!username || !email) {
+                showToast('error', '更新失败', '请填写所有必填字段');
+                return;
+            }
+            
+            // 检查用户名是否已被其他用户使用
+            if (users.some(u => u.username === username && u.id !== currentUser.id)) {
+                showToast('error', '更新失败', '用户名已被使用');
+                return;
+            }
+            
+            // 检查邮箱是否已被其他用户使用
+            if (users.some(u => u.email === email && u.id !== currentUser.id)) {
+                showToast('error', '更新失败', '邮箱已被使用');
+                return;
+            }
+            
+            // 更新用户信息
+            currentUser.username = username;
+            currentUser.email = email;
+            
+            if (password) {
+                currentUser.password = password;
+            }
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // 更新显示
+            updateUserInfo();
+            
+            // 显示成功提示
+            showToast('success', '更新成功', '个人资料已更新');
+        }
+        
+        // 加载管理员页面
+        function loadAdminPage() {
+            // 默认显示用户管理选项卡
+            showAdminTab('users');
+        }
+        
+        // 显示管理员选项卡
+        function showAdminTab(tabId) {
+            // 更新选项卡状态
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active', 'text-primary', 'border-primary');
+                    tab.classList.remove('text-gray-500');
+                } else {
+                    tab.classList.remove('active', 'text-primary', 'border-primary');
+                    tab.classList.add('text-gray-500');
+                }
+            });
+            
+            // 显示选项卡内容
+            document.querySelectorAll('.admin-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            
+            // 根据选项卡ID执行特定操作
+            switch (tabId) {
+                case 'users':
+                    loadAdminUsers();
+                    break;
+                case 'gifts':
+                    loadAdminGifts();
+                    break;
+                case 'points':
+                    loadAdminPoints();
+                    break;
+                case 'redemptions':
+                    loadAdminRedemptions();
+                    break;
+                case 'settings':
+                    loadPointsSettings();
+                    break;
+            }
+        }
+        
+        // 加载积分区域设置
+        function loadPointsSettings() {
+            // 填充表单
+            document.getElementById('primary-min').value = pointsSettings.primary.min;
+            document.getElementById('primary-max').value = pointsSettings.primary.max;
+            document.getElementById('secondary-min').value = pointsSettings.secondary.min;
+            document.getElementById('secondary-max').value = pointsSettings.secondary.max;
+            document.getElementById('tertiary-min').value = pointsSettings.tertiary.min;
+            document.getElementById('tertiary-max').value = pointsSettings.tertiary.max || '';
+        }
+        
+        // 保存积分区域设置
+        function savePointsSettings() {
+            // 获取表单值
+            const primaryMin = parseInt(document.getElementById('primary-min').value) || 0;
+            const primaryMax = parseInt(document.getElementById('primary-max').value) || 0;
+            const secondaryMin = parseInt(document.getElementById('secondary-min').value) || 0;
+            const secondaryMax = parseInt(document.getElementById('secondary-max').value) || 0;
+            const tertiaryMin = parseInt(document.getElementById('tertiary-min').value) || 0;
+            const tertiaryMax = document.getElementById('tertiary-max').value ? parseInt(document.getElementById('tertiary-max').value) : null;
+            
+            // 验证设置
+            if (primaryMin >= primaryMax) {
+                showToast('error', '保存失败', '初级区域的最低积分必须小于最高积分');
+                return;
+            }
+            
+            if (secondaryMin >= secondaryMax) {
+                showToast('error', '保存失败', '中级区域的最低积分必须小于最高积分');
+                return;
+            }
+            
+            if (primaryMax >= secondaryMin) {
+                showToast('error', '保存失败', '初级区域的最高积分必须小于中级区域的最低积分');
+                return;
+            }
+            
+            if (secondaryMax >= tertiaryMin) {
+                showToast('error', '保存失败', '中级区域的最高积分必须小于高级区域的最低积分');
+                return;
+            }
+            
+            // 更新设置
+            pointsSettings = {
+                primary: { min: primaryMin, max: primaryMax },
+                secondary: { min: secondaryMin, max: secondaryMax },
+                tertiary: { min: tertiaryMin, max: tertiaryMax }
+            };
+            
+            // 保存到本地存储
+            localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
+            
+            // 显示成功提示
+            showToast('success', '保存成功', '积分区域设置已更新');
+        }
+        
+        // 加载管理员用户列表
+        function loadAdminUsers() {
+            const container = document.getElementById('users-list');
+            container.innerHTML = '';
+            
+            // 搜索筛选
+            const searchTerm = document.getElementById('user-search').value.toLowerCase().trim();
+            
+            let filteredUsers = users;
+            if (searchTerm) {
+                filteredUsers = users.filter(user => 
+                    user.username.toLowerCase().includes(searchTerm) || 
+                    user.email.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            filteredUsers.forEach(user => {
+                const row = document.createElement('tr');
+                
+                // 角色标签
+                const roleBadge = user.role === 'admin' ? 
+                    '<span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">管理员</span>' : 
+                    '<span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">用户</span>';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.username}</div>
+                                <div class="text-sm text-gray-500">${user.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${roleBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.points}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(user.joinDate)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <button class="text-primary hover:text-blue-700 mr-3 edit-user-btn" data-id="${user.id}">编辑</button>
+                        ${user.role !== 'admin' ? 
+                            `<button class="text-red-600 hover:text-red-800 delete-user-btn" data-id="${user.id}">删除</button>` : 
+                            ''
+                        }
+                    </td>
+                `;
+                
+                container.appendChild(row);
+            });
+            
+            // 添加编辑用户事件
+            document.querySelectorAll('.edit-user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    showEditUserModal(userId);
+                });
+            });
+            
+            // 添加删除用户事件
+            document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    deleteUser(userId);
+                });
+            });
+        }
+        
+        // 显示添加用户模态框
+        function showAddUserModal() {
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalFooter = document.getElementById('modal-footer');
+            
+            modalTitle.textContent = '添加用户';
+            
+            modalContent.innerHTML = `
+                <form id="add-user-form">
+                    <div class="mb-4">
+                        <label for="add-username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="add-username" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-email" class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                        <input type="email" id="add-email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <input type="password" id="add-password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-role" class="block text-sm font-medium text-gray-700 mb-1">角色</label>
+                        <select id="add-role" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="user">用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-points" class="block text-sm font-medium text-gray-700 mb-1">初始积分</label>
+                        <input type="number" id="add-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0" value="0">
+                    </div>
+                </form>
+            `;
+            
+            modalFooter.innerHTML = `
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none mr-3" id="cancel-add-user">取消</button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-blue-600 focus:outline-none" id="confirm-add-user">添加</button>
+            `;
+            
+            // 显示模态框
+            document.getElementById('modal').classList.remove('hidden');
+            
+            // 绑定事件
+            document.getElementById('cancel-add-user').addEventListener('click', hideModal);
+            
+            document.getElementById('confirm-add-user').addEventListener('click', function() {
+                const form = document.getElementById('add-user-form');
+                
+                if (form.checkValidity()) {
+                    addUser();
+                } else {
+                    form.reportValidity();
+                }
+            });
+        }
+        
+        // 添加用户
+        function addUser() {
+            const username = document.getElementById('add-username').value.trim();
+            const email = document.getElementById('add-email').value.trim();
+            const password = document.getElementById('add-password').value.trim();
+            const role = document.getElementById('add-role').value;
+            const points = parseInt(document.getElementById('add-points').value) || 0;
+            
+            // 检查用户名是否已存在
+            if (users.some(u => u.username === username)) {
+                showToast('error', '添加失败', '用户名已存在');
+                return;
+            }
+            
+            // 检查邮箱是否已存在
+            if (users.some(u => u.email === email)) {
+                showToast('error', '添加失败', '邮箱已被注册');
+                return;
+            }
+            
+            // 创建新用户
+            const newUser = {
+                id: 'user' + Date.now(),
+                username: username,
+                password: password,
+                email: email,
+                role: role,
+                points: points,
+                joinDate: new Date().toISOString(),
+                referrerId: null,
+                referrals: [],
+                pointsHistory: []
+            };
+            
+            // 如果有初始积分，添加积分记录
+            if (points > 0) {
+                const pointsRecord = {
+                    id: 'ph' + Date.now(),
+                    userId: newUser.id,
+                    type: 'earn',
+                    amount: points,
+                    description: '初始积分',
+                    date: new Date().toISOString()
+                };
+                
+                newUser.pointsHistory.push(pointsRecord);
+                pointsHistory.push(pointsRecord);
+            }
+            
+            // 添加新用户
+            users.push(newUser);
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 隐藏模态框
+            hideModal();
+            
+            // 显示成功提示
+            showToast('success', '添加成功', '用户已添加');
+            
+            // 重新加载用户列表
+            loadAdminUsers();
+        }
+        
+        // 显示编辑用户模态框
+        function showEditUserModal(userId) {
+            const user = users.find(u => u.id === userId);
+            
+            if (!user) return;
+            
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalFooter = document.getElementById('modal-footer');
+            
+            modalTitle.textContent = '编辑用户';
+            
+            modalContent.innerHTML = `
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id" value="${user.id}">
+                    <div class="mb-4">
+                        <label for="edit-username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="edit-username" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${user.username}" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-email" class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                        <input type="email" id="edit-email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${user.email}" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-password" class="block text-sm font-medium text-gray-700 mb-1">密码 (留空表示不修改)</label>
+                        <input type="password" id="edit-password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-role" class="block text-sm font-medium text-gray-700 mb-1">角色</label>
+                        <select id="edit-role" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''}>用户</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-points" class="block text-sm font-medium text-gray-700 mb-1">积分</label>
+                        <input type="number" id="edit-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${user.points}" min="0">
+                    </div>
+                </form>
+            `;
+            
+            modalFooter.innerHTML = `
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none mr-3" id="cancel-edit-user">取消</button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-blue-600 focus:outline-none" id="confirm-edit-user">保存</button>
+            `;
+            
+            // 显示模态框
+            document.getElementById('modal').classList.remove('hidden');
+            
+            // 绑定事件
+            document.getElementById('cancel-edit-user').addEventListener('click', hideModal);
+            
+            document.getElementById('confirm-edit-user').addEventListener('click', function() {
+                const form = document.getElementById('edit-user-form');
+                
+                if (form.checkValidity()) {
+                    updateUser();
+                } else {
+                    form.reportValidity();
+                }
+            });
+        }
+        
+        // 更新用户
+        function updateUser() {
+            const userId = document.getElementById('edit-user-id').value;
+            const username = document.getElementById('edit-username').value.trim();
+            const email = document.getElementById('edit-email').value.trim();
+            const password = document.getElementById('edit-password').value.trim();
+            const role = document.getElementById('edit-role').value;
+            const points = parseInt(document.getElementById('edit-points').value) || 0;
+            
+            const user = users.find(u => u.id === userId);
+            
+            if (!user) return;
+            
+            // 检查用户名是否已被其他用户使用
+            if (users.some(u => u.username === username && u.id !== userId)) {
+                showToast('error', '更新失败', '用户名已存在');
+                return;
+            }
+            
+            // 检查邮箱是否已被其他用户使用
+            if (users.some(u => u.email === email && u.id !== userId)) {
+                showToast('error', '更新失败', '邮箱已被注册');
+                return;
+            }
+            
+            // 记录积分变化
+            const oldPoints = user.points;
+            const pointsDiff = points - oldPoints;
+            
+            // 更新用户信息
+            user.username = username;
+            user.email = email;
+            
+            if (password) {
+                user.password = password;
+            }
+            
+            user.role = role;
+            user.points = points;
+            
+            // 如果积分有变化，添加积分记录
+            if (pointsDiff !== 0) {
+                const pointsRecord = {
+                    id: 'ph' + Date.now(),
+                    userId: user.id,
+                    type: pointsDiff > 0 ? 'earn' : 'spend',
+                    amount: Math.abs(pointsDiff),
+                    description: '管理员调整',
+                    date: new Date().toISOString()
+                };
+                
+                user.pointsHistory.push(pointsRecord);
+                pointsHistory.push(pointsRecord);
+            }
+            
+            // 如果是当前用户，更新当前用户
+            if (currentUser && currentUser.id === userId) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUserInfo();
+            }
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 隐藏模态框
+            hideModal();
+            
+            // 显示成功提示
+            showToast('success', '更新成功', '用户信息已更新');
+            
+            // 重新加载用户列表
+            loadAdminUsers();
+        }
+        
+        // 删除用户
+        function deleteUser(userId) {
+            if (!confirm('确定要删除此用户吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            // 检查是否是当前用户
+            if (currentUser && currentUser.id === userId) {
+                showToast('error', '删除失败', '不能删除当前登录的用户');
+                return;
+            }
+            
+            // 删除用户
+            users = users.filter(u => u.id !== userId);
+            
+            // 删除相关的积分记录
+            pointsHistory = pointsHistory.filter(ph => ph.userId !== userId);
+            
+            // 删除相关的兑换记录
+            redemptions = redemptions.filter(r => r.userId !== userId);
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            
+            // 显示成功提示
+            showToast('success', '删除成功', '用户已删除');
+            
+            // 重新加载用户列表
+            loadAdminUsers();
+        }
+        
+        // 加载管理员礼品列表
+        function loadAdminGifts() {
+            const container = document.getElementById('admin-gifts-list');
+            container.innerHTML = '';
+            
+            // 搜索筛选
+            const searchTerm = document.getElementById('admin-gift-search').value.toLowerCase().trim();
+            
+            let filteredGifts = gifts;
+            if (searchTerm) {
+                filteredGifts = gifts.filter(gift => 
+                    gift.name.toLowerCase().includes(searchTerm) || 
+                    gift.description.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            filteredGifts.forEach(gift => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg shadow overflow-hidden';
+                
+                // 状态标签
+                let statusBadge = '';
+                if (gift.status === 'available') {
+                    statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">可兑换</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">已兑完</span>';
+                }
+                
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${gift.image}" alt="${gift.name}" class="w-full h-40 object-contain bg-gray-50 p-4">
+                        <div class="absolute top-2 right-2">
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-neutral mb-1">${gift.name}</h3>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">${gift.description}</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <span class="text-primary font-bold">${gift.points}</span>
+                                <span class="text-gray-500 text-sm ml-1">积分</span>
+                            </div>
+                            <div class="text-gray-600 text-sm">
+                                库存: <span class="font-medium">${gift.stock}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <button class="text-primary hover:text-blue-700 edit-gift-btn" data-id="${gift.id}">
+                                <i class="fa fa-pencil mr-1"></i> 编辑
+                            </button>
+                            <button class="text-red-600 hover:text-red-800 delete-gift-btn" data-id="${gift.id}">
+                                <i class="fa fa-trash mr-1"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            // 添加编辑礼品事件
+            document.querySelectorAll('.edit-gift-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const giftId = this.getAttribute('data-id');
+                    showEditGiftModal(giftId);
+                });
+            });
+            
+            // 添加删除礼品事件
+            document.querySelectorAll('.delete-gift-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const giftId = this.getAttribute('data-id');
+                    deleteGift(giftId);
+                });
+            });
+        }
+        
+        // 显示添加礼品模态框
+        function showAddGiftModal() {
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalFooter = document.getElementById('modal-footer');
+            
+            modalTitle.textContent = '添加礼品';
+            
+            modalContent.innerHTML = `
+                <form id="add-gift-form">
+                    <div class="mb-4">
+                        <label for="add-gift-name" class="block text-sm font-medium text-gray-700 mb-1">礼品名称</label>
+                        <input type="text" id="add-gift-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-gift-description" class="block text-sm font-medium text-gray-700 mb-1">礼品描述</label>
+                        <textarea id="add-gift-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-gift-points" class="block text-sm font-medium text-gray-700 mb-1">所需积分</label>
+                        <input type="number" id="add-gift-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="1" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-gift-stock" class="block text-sm font-medium text-gray-700 mb-1">库存数量</label>
+                        <input type="number" id="add-gift-stock" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="add-gift-image" class="block text-sm font-medium text-gray-700 mb-1">礼品图片URL</label>
+                        <input type="url" id="add-gift-image" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    </div>
+                </form>
+            `;
+            
+            modalFooter.innerHTML = `
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none mr-3" id="cancel-add-gift">取消</button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-blue-600 focus:outline-none" id="confirm-add-gift">添加</button>
+            `;
+            
+            // 显示模态框
+            document.getElementById('modal').classList.remove('hidden');
+            
+            // 绑定事件
+            document.getElementById('cancel-add-gift').addEventListener('click', hideModal);
+            
+            document.getElementById('confirm-add-gift').addEventListener('click', function() {
+                const form = document.getElementById('add-gift-form');
+                
+                if (form.checkValidity()) {
+                    addGift();
+                } else {
+                    form.reportValidity();
+                }
+            });
+        }
+        
+        // 添加礼品
+        function addGift() {
+            const name = document.getElementById('add-gift-name').value.trim();
+            const description = document.getElementById('add-gift-description').value.trim();
+            const points = parseInt(document.getElementById('add-gift-points').value);
+            const stock = parseInt(document.getElementById('add-gift-stock').value);
+            const image = document.getElementById('add-gift-image').value.trim();
+            
+            // 创建新礼品
+            const newGift = {
+                id: 'gift' + Date.now(),
+                name: name,
+                description: description,
+                points: points,
+                stock: stock,
+                image: image,
+                status: stock > 0 ? 'available' : 'unavailable',
+                createDate: new Date().toISOString()
+            };
+            
+            // 添加新礼品
+            gifts.push(newGift);
+            
+            // 保存数据
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            
+            // 隐藏模态框
+            hideModal();
+            
+            // 显示成功提示
+            showToast('success', '添加成功', '礼品已添加');
+            
+            // 重新加载礼品列表
+            loadAdminGifts();
+        }
+        
+        // 显示编辑礼品模态框
+        function showEditGiftModal(giftId) {
+            const gift = gifts.find(g => g.id === giftId);
+            
+            if (!gift) return;
+            
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalFooter = document.getElementById('modal-footer');
+            
+            modalTitle.textContent = '编辑礼品';
+            
+            modalContent.innerHTML = `
+                <form id="edit-gift-form">
+                    <input type="hidden" id="edit-gift-id" value="${gift.id}">
+                    <div class="mb-4">
+                        <label for="edit-gift-name" class="block text-sm font-medium text-gray-700 mb-1">礼品名称</label>
+                        <input type="text" id="edit-gift-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.name}" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-gift-description" class="block text-sm font-medium text-gray-700 mb-1">礼品描述</label>
+                        <textarea id="edit-gift-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>${gift.description}</textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-gift-points" class="block text-sm font-medium text-gray-700 mb-1">所需积分</label>
+                        <input type="number" id="edit-gift-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.points}" min="1" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-gift-stock" class="block text-sm font-medium text-gray-700 mb-1">库存数量</label>
+                        <input type="number" id="edit-gift-stock" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.stock}" min="0" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-gift-image" class="block text-sm font-medium text-gray-700 mb-1">礼品图片URL</label>
+                        <input type="url" id="edit-gift-image" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.image}" required>
+                    </div>
+                </form>
+            `;
+            
+            modalFooter.innerHTML = `
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none mr-3" id="cancel-edit-gift">取消</button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-blue-600 focus:outline-none" id="confirm-edit-gift">保存</button>
+            `;
+            
+            // 显示模态框
+            document.getElementById('modal').classList.remove('hidden');
+            
+            // 绑定事件
+            document.getElementById('cancel-edit-gift').addEventListener('click', hideModal);
+            
+            document.getElementById('confirm-edit-gift').addEventListener('click', function() {
+                const form = document.getElementById('edit-gift-form');
+                
+                if (form.checkValidity()) {
+                    updateGift();
+                } else {
+                    form.reportValidity();
+                }
+            });
+        }
+        
+        // 更新礼品
+        function updateGift() {
+            const giftId = document.getElementById('edit-gift-id').value;
+            const name = document.getElementById('edit-gift-name').value.trim();
+            const description = document.getElementById('edit-gift-description').value.trim();
+            const points = parseInt(document.getElementById('edit-gift-points').value);
+            const stock = parseInt(document.getElementById('edit-gift-stock').value);
+            const image = document.getElementById('edit-gift-image').value.trim();
+            
+            const gift = gifts.find(g => g.id === giftId);
+            
+            if (!gift) return;
+            
+            // 更新礼品信息
+            gift.name = name;
+            gift.description = description;
+            gift.points = points;
+            gift.stock = stock;
+            gift.image = image;
+            gift.status = stock > 0 ? 'available' : 'unavailable';
+            
+            // 保存数据
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            
+            // 隐藏模态框
+            hideModal();
+            
+            // 显示成功提示
+            showToast('success', '更新成功', '礼品信息已更新');
+            
+            // 重新加载礼品列表
+            loadAdminGifts();
+        }
+        
+        // 删除礼品
+        function deleteGift(giftId) {
+            if (!confirm('确定要删除此礼品吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            // 检查是否有相关的兑换记录
+            const relatedRedemptions = redemptions.filter(r => r.giftId === giftId);
+            
+            if (relatedRedemptions.length > 0) {
+                showToast('error', '删除失败', '此礼品有相关的兑换记录，无法删除');
+                return;
+            }
+            
+            // 删除礼品
+            gifts = gifts.filter(g => g.id !== giftId);
+            
+            // 保存数据
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            
+            // 显示成功提示
+            showToast('success', '删除成功', '礼品已删除');
+            
+            // 重新加载礼品列表
+            loadAdminGifts();
+        }
+        
+        // 加载管理员积分管理
+        function loadAdminPoints() {
+            // 更新用户选择下拉框
+            updateUserSelect();
+            
+            // 加载积分记录
+            loadAdminPointsHistory();
+        }
+        
+        // 更新用户选择下拉框
+        function updateUserSelect() {
+            const userSelect = document.getElementById('user-select');
+            
+            // 清空下拉框
+            userSelect.innerHTML = '<option value="">-- 选择用户 --</option>';
+            
+            // 添加用户选项
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.username} (${user.points} 积分)`;
+                userSelect.appendChild(option);
+            });
+        }
+        
+        // 加载管理员积分记录
+        function loadAdminPointsHistory() {
+            const container = document.getElementById('admin-points-history');
+            container.innerHTML = '';
+            
+            // 按日期排序
+            const sortedHistory = [...pointsHistory].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+            
+            if (sortedHistory.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">暂无积分记录</td>
+                `;
+                container.appendChild(row);
+                return;
+            }
+            
+            sortedHistory.forEach(record => {
+                const user = users.find(u => u.id === record.userId);
+                const username = user ? user.username : '未知用户';
+                
+                const row = document.createElement('tr');
+                
+                // 类型标签
+                const typeBadge = record.type === 'earn' ? 
+                    '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">获得</span>' : 
+                    '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">消耗</span>';
+                
+                // 积分变动
+                const pointsChange = record.type === 'earn' ? `+${record.amount}` : `-${record.amount}`;
+                const pointsClass = record.type === 'earn' ? 'text-green-600' : 'text-red-600';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(record.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${typeBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${pointsClass} font-medium">${pointsChange}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.description}</td>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+        
+        // 发放积分
+        function awardPoints() {
+            const userId = document.getElementById('user-select').value;
+            const amount = parseInt(document.getElementById('points-amount').value);
+            const reason = document.getElementById('points-reason').value.trim();
+            
+            if (!userId || !amount || !reason) {
+                showToast('error', '发放失败', '请填写所有字段');
+                return;
+            }
+            
+            if (amount <= 0) {
+                showToast('error', '发放失败', '积分数量必须大于0');
+                return;
+            }
+            
+            const user = users.find(u => u.id === userId);
+            
+            if (!user) {
+                showToast('error', '发放失败', '用户不存在');
+                return;
+            }
+            
+            // 增加用户积分
+            user.points += amount;
+            
+            // 添加积分记录
+            const pointsRecord = {
+                id: 'ph' + Date.now(),
+                userId: user.id,
+                type: 'earn',
+                amount: amount,
+                description: reason,
+                date: new Date().toISOString()
+            };
+            
+            user.pointsHistory.push(pointsRecord);
+            pointsHistory.push(pointsRecord);
+            
+            // 如果是当前用户，更新当前用户
+            if (currentUser && currentUser.id === userId) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUserInfo();
+            }
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 重置表单
+            document.getElementById('award-points-form').reset();
+            
+            // 显示成功提示
+            showToast('success', '发放成功', `已向 ${user.username} 发放 ${amount} 积分`);
+            
+            // 重新加载积分记录
+            loadAdminPointsHistory();
+        }
+        
+        // 加载管理员兑换管理
+        function loadAdminRedemptions() {
+            const container = document.getElementById('admin-redemptions-list');
+            container.innerHTML = '';
+            
+            // 搜索筛选
+            const searchTerm = document.getElementById('redemption-search').value.toLowerCase().trim();
+            const filter = document.getElementById('redemption-filter').value;
+            
+            let filteredRedemptions = redemptions;
+            
+            // 状态筛选
+            if (filter === 'pending') {
+                filteredRedemptions = filteredRedemptions.filter(r => r.status === 'pending');
+            } else if (filter === 'completed') {
+                filteredRedemptions = filteredRedemptions.filter(r => r.status === 'completed');
+            }
+            
+            // 搜索筛选
+            if (searchTerm) {
+                filteredRedemptions = filteredRedemptions.filter(r => {
+                    const user = users.find(u => u.id === r.userId);
+                    const gift = gifts.find(g => g.id === r.giftId);
+                    
+                    const username = user ? user.username.toLowerCase() : '';
+                    const giftName = gift ? gift.name.toLowerCase() : '';
+                    
+                    return username.includes(searchTerm) || giftName.includes(searchTerm);
+                });
+            }
+            
+            // 按日期排序
+            filteredRedemptions.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+            
+            if (filteredRedemptions.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">暂无兑换记录</td>
+                `;
+                container.appendChild(row);
+                return;
+            }
+            
+            filteredRedemptions.forEach(redemption => {
+                const user = users.find(u => u.id === redemption.userId);
+                const gift = gifts.find(g => g.id === redemption.giftId);
+                
+                const username = user ? user.username : '未知用户';
+                const giftName = gift ? gift.name : '未知礼品';
+                
+                const row = document.createElement('tr');
+                
+                // 状态标签
+                let statusBadge = '';
+                if (redemption.status === 'pending') {
+                    statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">待处理</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已完成</span>';
+                }
+                
+                // 操作按钮
+                let actionButtons = '';
+                if (redemption.status === 'pending') {
+                    actionButtons = `
+                        <button class="text-green-600 hover:text-green-800 mr-3 complete-redemption-btn" data-id="${redemption.id}">完成</button>
+                        <button class="text-red-600 hover:text-red-800 cancel-admin-redemption-btn" data-id="${redemption.id}">取消</button>
+                    `;
+                } else {
+                    actionButtons = redemption.completeDate ? formatDate(redemption.completeDate) : '-';
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(redemption.requestDate)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${giftName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">${redemption.points}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${actionButtons}</td>
+                `;
+                
+                container.appendChild(row);
+            });
+            
+            // 添加完成兑换事件
+            document.querySelectorAll('.complete-redemption-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const redemptionId = this.getAttribute('data-id');
+                    completeRedemption(redemptionId);
+                });
+            });
+            
+            // 添加取消兑换事件
+            document.querySelectorAll('.cancel-admin-redemption-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const redemptionId = this.getAttribute('data-id');
+                    cancelAdminRedemption(redemptionId);
+                });
+            });
+        }
+        
+        // 完成兑换
+        function completeRedemption(redemptionId) {
+            const redemption = redemptions.find(r => r.id === redemptionId);
+            
+            if (!redemption || redemption.status !== 'pending') {
+                showToast('error', '操作失败', '无法完成此兑换记录');
+                return;
+            }
+            
+            // 更新兑换状态
+            redemption.status = 'completed';
+            redemption.completeDate = new Date().toISOString();
+            
+            // 保存数据
+            localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            
+            // 显示成功提示
+            showToast('success', '操作成功', '兑换已完成');
+            
+            // 重新加载兑换记录
+            loadAdminRedemptions();
+        }
+        
+        // 取消兑换（管理员）
+        function cancelAdminRedemption(redemptionId) {
+            const redemption = redemptions.find(r => r.id === redemptionId);
+            
+            if (!redemption || redemption.status !== 'pending') {
+                showToast('error', '操作失败', '无法取消此兑换记录');
+                return;
+            }
+            
+            // 恢复用户积分
+            const user = users.find(u => u.id === redemption.userId);
+            
+            if (user) {
+                user.points += redemption.points;
+                
+                // 添加积分记录
+                const pointsRecord = {
+                    id: 'ph' + Date.now(),
+                    userId: user.id,
+                    type: 'earn',
+                    amount: redemption.points,
+                    description: '管理员取消兑换',
+                    date: new Date().toISOString()
+                };
+                
+                user.pointsHistory.push(pointsRecord);
+                pointsHistory.push(pointsRecord);
+                
+                // 如果是当前用户，更新当前用户
+                if (currentUser && currentUser.id === user.id) {
+                    currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateUserInfo();
+                }
+            }
+            
+            // 恢复礼品库存
+            const gift = gifts.find(g => g.id === redemption.giftId);
+            
+            if (gift) {
+                gift.stock += 1;
+                gift.status = 'available';
+            }
+            
+            // 删除兑换记录
+            redemptions = redemptions.filter(r => r.id !== redemptionId);
+            
+            // 保存数据
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('gifts', JSON.stringify(gifts));
+            localStorage.setItem('redemptions', JSON.stringify(redemptions));
+            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
+            
+            // 显示成功提示
+            showToast('success', '操作成功', '兑换已取消');
+            
+            // 重新加载兑换记录
+            loadAdminRedemptions();
+        }
+        
+        // 显示模态框
+        function showModal() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+        
+        // 隐藏模态框
+        function hideModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+        
+        // 显示通知
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            // 设置通知内容
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // 设置图标
+            if (type === 'success') {
+                toastIcon.className = 'flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3 mt-0.5';
+                toastIcon.innerHTML = '<i class="fa fa-check text-sm"></i>';
+            } else if (type === 'error') {
+                toastIcon.className = 'flex-shrink-0 h-6 w-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mr-3 mt-0.5';
+                toastIcon.innerHTML = '<i class="fa fa-times text-sm"></i>';
+            } else if (type === 'info') {
+                toastIcon.className = 'flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3 mt-0.5';
+                toastIcon.innerHTML = '<i class="fa fa-info text-sm"></i>';
+            }
+            
+            // 显示通知
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                hideToast();
+            }, 3000);
+        }
+        
+        // 隐藏通知
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // 格式化短日期
+        function formatDateShort(date) {
+            if (typeof date === 'string') {
+                date = new Date(date);
+            }
+            
+            return date.toLocaleDateString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
