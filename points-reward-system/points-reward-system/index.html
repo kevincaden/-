@@ -343,7 +343,7 @@
                                 </span>
                                 初级区域
                             </h3>
-                            <span class="text-sm text-gray-500">500-1000积分</span>
+                            <span class="text-sm text-gray-500">25-50积分</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="初级礼品-container">
                             <!-- 初级礼品将通过JS动态加载 -->
@@ -359,7 +359,7 @@
                                 </span>
                                 中级区域
                             </h3>
-                            <span class="text-sm text-gray-500">1001-2000积分</span>
+                            <span class="text-sm text-gray-500">50-75积分</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="中级礼品-container">
                             <!-- 中级礼品将通过JS动态加载 -->
@@ -375,7 +375,7 @@
                                 </span>
                                 高级区域
                             </h3>
-                            <span class="text-sm text-gray-500">2001积分以上</span>
+                            <span class="text-sm text-gray-500">75-100积分</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="高级礼品-container">
                             <!-- 高级礼品将通过JS动态加载 -->
@@ -981,11 +981,229 @@
         let gifts = [];
         let redemptions = [];
         let pointsHistory = [];
-        let pointsSettings = {
-            primary: { min: 500, max: 1000 },
-            secondary: { min: 1001, max: 2000 },
-            tertiary: { min: 2001, max: null }
-        };
+        const POINTS_SETTINGS_STORAGE_VERSION = '2';
+        const DEFAULT_POINTS_SETTINGS = Object.freeze({
+            primary: { min: 25, max: 50 },
+            secondary: { min: 50, max: 75 },
+            tertiary: { min: 75, max: 100 }
+        });
+        let pointsSettings = cloneDefaultPointsSettings();
+
+        function cloneDefaultPointsSettings() {
+            return JSON.parse(JSON.stringify(DEFAULT_POINTS_SETTINGS));
+        }
+
+        function normalizePointsSettings(settings) {
+            const defaults = cloneDefaultPointsSettings();
+
+            if (!settings || typeof settings !== 'object') {
+                return defaults;
+            }
+
+            const normalized = {
+                primary: {
+                    min: Number(settings.primary?.min),
+                    max: Number(settings.primary?.max)
+                },
+                secondary: {
+                    min: Number(settings.secondary?.min),
+                    max: Number(settings.secondary?.max)
+                },
+                tertiary: {
+                    min: Number(settings.tertiary?.min),
+                    max: settings.tertiary?.max === null || settings.tertiary?.max === '' || typeof settings.tertiary?.max === 'undefined'
+                        ? null
+                        : Number(settings.tertiary.max)
+                }
+            };
+
+            const hasInvalidValue = [
+                normalized.primary.min,
+                normalized.primary.max,
+                normalized.secondary.min,
+                normalized.secondary.max,
+                normalized.tertiary.min
+            ].some(value => Number.isNaN(value));
+
+            if (hasInvalidValue || (normalized.tertiary.max !== null && Number.isNaN(normalized.tertiary.max))) {
+                return defaults;
+            }
+
+            return normalized;
+        }
+
+        function savePointsSettingsToStorage() {
+            localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
+            localStorage.setItem('pointsSettingsVersion', POINTS_SETTINGS_STORAGE_VERSION);
+        }
+
+        function formatPointsRange(range) {
+            return range.max === null || typeof range.max === 'undefined'
+                ? `${range.min}积分以上`
+                : `${range.min}-${range.max}积分`;
+        }
+
+        function getGiftLevelCollections(giftsToDisplay) {
+            const collections = {
+                primary: [],
+                secondary: [],
+                tertiary: []
+            };
+
+            giftsToDisplay.forEach(gift => {
+                const points = gift.points;
+
+                if (points >= pointsSettings.primary.min && points <= pointsSettings.primary.max) {
+                    collections.primary.push(gift);
+                    return;
+                }
+
+                if (points >= pointsSettings.secondary.min && points <= pointsSettings.secondary.max) {
+                    collections.secondary.push(gift);
+                    return;
+                }
+
+                if (points >= pointsSettings.tertiary.min && (pointsSettings.tertiary.max === null || points <= pointsSettings.tertiary.max)) {
+                    collections.tertiary.push(gift);
+                }
+            });
+
+            return collections;
+        }
+
+        function updateGiftImagePreview(previewId, imageSrc) {
+            const imagePreview = document.getElementById(previewId);
+            if (!imagePreview) {
+                return;
+            }
+
+            if (imageSrc) {
+                imagePreview.innerHTML = `<img src="${escapeHtml(imageSrc)}" alt="预览" class="w-full h-full object-cover rounded-md">`;
+                return;
+            }
+
+            imagePreview.innerHTML = '<i class="fa fa-image text-gray-400 text-2xl"></i>';
+        }
+
+        function toggleGiftImageInputGroups(prefix, mode, currentImage = '') {
+            const uploadGroup = document.getElementById(`${prefix}-upload-group`);
+            const urlGroup = document.getElementById(`${prefix}-url-group`);
+            const urlInput = document.getElementById(`${prefix}-gift-image-url`);
+            const fileInput = document.getElementById(`${prefix}-gift-image-file`);
+
+            if (uploadGroup) {
+                uploadGroup.classList.toggle('hidden', mode !== 'upload');
+            }
+
+            if (urlGroup) {
+                urlGroup.classList.toggle('hidden', mode !== 'url');
+            }
+
+            if (urlInput) {
+                urlInput.required = mode === 'url';
+            }
+
+            if (fileInput) {
+                fileInput.required = mode === 'upload';
+            }
+
+            if (mode === 'keep') {
+                updateGiftImagePreview(`${prefix}-image-preview`, currentImage);
+                return;
+            }
+
+            if (mode === 'url') {
+                updateGiftImagePreview(`${prefix}-image-preview`, urlInput ? urlInput.value.trim() : '');
+                return;
+            }
+
+            if (mode === 'upload' && (!fileInput || !fileInput.files || fileInput.files.length === 0)) {
+                updateGiftImagePreview(`${prefix}-image-preview`, currentImage);
+            }
+        }
+
+        function bindGiftImageOptionEvents(prefix, currentImage = '') {
+            document.querySelectorAll(`input[name="${prefix}-gift-image-mode"]`).forEach(input => {
+                input.addEventListener('change', function() {
+                    toggleGiftImageInputGroups(prefix, this.value, currentImage);
+                });
+            });
+
+            const fileInput = document.getElementById(`${prefix}-gift-image-file`);
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) {
+                        updateGiftImagePreview(`${prefix}-image-preview`, currentImage);
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(loadEvent) {
+                        updateGiftImagePreview(`${prefix}-image-preview`, loadEvent.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const urlInput = document.getElementById(`${prefix}-gift-image-url`);
+            if (urlInput) {
+                ['input', 'change'].forEach(eventName => {
+                    urlInput.addEventListener(eventName, function() {
+                        const selectedMode = document.querySelector(`input[name="${prefix}-gift-image-mode"]:checked`)?.value;
+                        if (selectedMode === 'url') {
+                            updateGiftImagePreview(`${prefix}-image-preview`, this.value.trim());
+                        }
+                    });
+                });
+            }
+
+            const selectedMode = document.querySelector(`input[name="${prefix}-gift-image-mode"]:checked`)?.value || 'upload';
+            toggleGiftImageInputGroups(prefix, selectedMode, currentImage);
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = event => resolve(event.target.result);
+                reader.onerror = () => reject(new Error('图片读取失败'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function resolveGiftImage(prefix, currentImage = '') {
+            const selectedMode = document.querySelector(`input[name="${prefix}-gift-image-mode"]:checked`)?.value;
+
+            if (selectedMode === 'keep') {
+                return currentImage;
+            }
+
+            if (selectedMode === 'url') {
+                const urlInput = document.getElementById(`${prefix}-gift-image-url`);
+                const imageUrl = urlInput ? urlInput.value.trim() : '';
+                if (!imageUrl) {
+                    throw new Error('请输入礼品图片链接');
+                }
+                return imageUrl;
+            }
+
+            const fileInput = document.getElementById(`${prefix}-gift-image-file`);
+            const imageFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+            if (!imageFile) {
+                throw new Error('请选择本地图片文件');
+            }
+
+            return readFileAsDataUrl(imageFile);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
         
         // 初始化应用
         document.addEventListener('DOMContentLoaded', function() {
@@ -1002,16 +1220,15 @@
         // 初始化数据
         function initData() {
             // 读取积分区域设置
-            if (localStorage.getItem('pointsSettings')) {
-                pointsSettings = JSON.parse(localStorage.getItem('pointsSettings'));
+            const storedPointsSettings = localStorage.getItem('pointsSettings');
+            const storedPointsSettingsVersion = localStorage.getItem('pointsSettingsVersion');
+
+            if (!storedPointsSettings || storedPointsSettingsVersion !== POINTS_SETTINGS_STORAGE_VERSION) {
+                pointsSettings = cloneDefaultPointsSettings();
+                savePointsSettingsToStorage();
             } else {
-                // 默认设置
-                pointsSettings = {
-                    primary: { min: 25, max: 50 },
-                    secondary: { min: 50, max: 75 },
-                    tertiary: { min: 75, max: 100 }
-                };
-                localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
+                pointsSettings = normalizePointsSettings(JSON.parse(storedPointsSettings));
+                savePointsSettingsToStorage();
             }
             
             // 检查本地存储中是否已有数据
@@ -1985,20 +2202,15 @@
             document.getElementById('高级礼品-container').innerHTML = '';
             
             // 更新区域积分范围显示
-            document.querySelector('#初级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.primary.min}-${pointsSettings.primary.max}积分`;
-            document.querySelector('#中级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.secondary.min}-${pointsSettings.secondary.max}积分`;
-            document.querySelector('#高级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = `${pointsSettings.tertiary.min}积分以上`;
+            document.querySelector('#初级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = formatPointsRange(pointsSettings.primary);
+            document.querySelector('#中级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = formatPointsRange(pointsSettings.secondary);
+            document.querySelector('#高级礼品-container').parentElement.querySelector('.text-sm.text-gray-500').textContent = formatPointsRange(pointsSettings.tertiary);
             
-            // 按积分范围分类礼品
-            const 初级礼品 = giftsToDisplay.filter(gift => gift.points >= pointsSettings.primary.min && gift.points <= pointsSettings.primary.max);
-            const 中级礼品 = giftsToDisplay.filter(gift => gift.points >= pointsSettings.secondary.min && gift.points <= pointsSettings.secondary.max);
-            const 高级礼品 = giftsToDisplay.filter(gift => {
-                if (pointsSettings.tertiary.max) {
-                    return gift.points >= pointsSettings.tertiary.min && gift.points <= pointsSettings.tertiary.max;
-                } else {
-                    return gift.points >= pointsSettings.tertiary.min;
-                }
-            });
+            // 按积分范围分类礼品，边界值只归属到一个区域
+            const giftCollections = getGiftLevelCollections(giftsToDisplay);
+            const 初级礼品 = giftCollections.primary;
+            const 中级礼品 = giftCollections.secondary;
+            const 高级礼品 = giftCollections.tertiary;
             
             // 显示各等级礼品
             displayGiftsInContainer(初级礼品, '初级礼品-container');
@@ -2527,13 +2739,18 @@
                 return;
             }
             
-            if (primaryMax >= secondaryMin) {
-                showToast('error', '保存失败', '初级区域的最高积分必须小于中级区域的最低积分');
+            if (primaryMax > secondaryMin) {
+                showToast('error', '保存失败', '初级区域的最高积分不能大于中级区域的最低积分');
                 return;
             }
             
-            if (secondaryMax >= tertiaryMin) {
-                showToast('error', '保存失败', '中级区域的最高积分必须小于高级区域的最低积分');
+            if (secondaryMax > tertiaryMin) {
+                showToast('error', '保存失败', '中级区域的最高积分不能大于高级区域的最低积分');
+                return;
+            }
+
+            if (tertiaryMax !== null && tertiaryMin >= tertiaryMax) {
+                showToast('error', '保存失败', '高级区域的最低积分必须小于最高积分');
                 return;
             }
             
@@ -2545,7 +2762,7 @@
             };
             
             // 保存到本地存储
-            localStorage.setItem('pointsSettings', JSON.stringify(pointsSettings));
+            savePointsSettingsToStorage();
             
             // 显示成功提示
             showToast('success', '保存成功', '积分区域设置已更新');
@@ -3021,20 +3238,37 @@
                     <div class="mb-4">
                         <label for="add-gift-points" class="block text-sm font-medium text-gray-700 mb-1">所需积分</label>
                         <input type="number" id="add-gift-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="1" required>
+                        <p class="mt-1 text-xs text-gray-500">当前积分区域：初级 ${formatPointsRange(pointsSettings.primary)} / 中级 ${formatPointsRange(pointsSettings.secondary)} / 高级 ${formatPointsRange(pointsSettings.tertiary)}</p>
                     </div>
                     <div class="mb-4">
                         <label for="add-gift-stock" class="block text-sm font-medium text-gray-700 mb-1">库存数量</label>
                         <input type="number" id="add-gift-stock" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" min="0" required>
                     </div>
                     <div class="mb-4">
-                        <label for="add-gift-image" class="block text-sm font-medium text-gray-700 mb-1">礼品图片</label>
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 w-20 h-20 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center" id="image-preview">
-                                <i class="fa fa-image text-gray-400 text-2xl"></i>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">礼品图片</label>
+                        <div class="space-y-3 rounded-lg border border-gray-200 p-4 bg-gray-50">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-white" id="add-image-preview">
+                                    <i class="fa fa-image text-gray-400 text-2xl"></i>
+                                </div>
+                                <div class="flex-grow space-y-3">
+                                    <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" name="add-gift-image-mode" value="upload" class="mr-2" checked>
+                                        上传本地图片
+                                    </label>
+                                    <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" name="add-gift-image-mode" value="url" class="mr-2">
+                                        使用图片链接
+                                    </label>
+                                </div>
                             </div>
-                            <div class="flex-grow">
-                                <input type="file" id="add-gift-image" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" accept="image/*" required>
-                                <p class="mt-1 text-xs text-gray-500">请上传图片文件 (JPG, PNG, GIF)</p>
+                            <div id="add-upload-group">
+                                <input type="file" id="add-gift-image-file" class="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" accept="image/*" required>
+                                <p class="mt-1 text-xs text-gray-500">支持 JPG、PNG、GIF 等图片格式</p>
+                            </div>
+                            <div id="add-url-group" class="hidden">
+                                <input type="text" id="add-gift-image-url" class="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入礼品图片链接">
+                                <p class="mt-1 text-xs text-gray-500">输入图片链接后会自动刷新右侧预览</p>
                             </div>
                         </div>
                     </div>
@@ -3051,19 +3285,7 @@
             
             // 绑定事件
             document.getElementById('cancel-add-gift').addEventListener('click', hideModal);
-            
-            // 图片预览
-            document.getElementById('add-gift-image').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imagePreview = document.getElementById('image-preview');
-                        imagePreview.innerHTML = `<img src="${e.target.result}" alt="预览" class="w-full h-full object-cover">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+            bindGiftImageOptionEvents('add');
             
             document.getElementById('confirm-add-gift').addEventListener('click', function() {
                 const form = document.getElementById('add-gift-form');
@@ -3077,22 +3299,14 @@
         }
         
         // 添加礼品
-        function addGift() {
+        async function addGift() {
             const name = document.getElementById('add-gift-name').value.trim();
             const description = document.getElementById('add-gift-description').value.trim();
             const points = parseInt(document.getElementById('add-gift-points').value);
             const stock = parseInt(document.getElementById('add-gift-stock').value);
-            const imageFile = document.getElementById('add-gift-image').files[0];
-            
-            // 处理图片上传
-            if (!imageFile) {
-                showToast('error', '添加失败', '请选择图片文件');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const image = e.target.result;
+
+            try {
+                const image = await resolveGiftImage('add');
                 
                 // 创建新礼品
                 const newGift = {
@@ -3120,9 +3334,9 @@
                 
                 // 重新加载礼品列表
                 loadAdminGifts();
-            };
-            
-            reader.readAsDataURL(imageFile);
+            } catch (error) {
+                showToast('error', '添加失败', error.message || '礼品图片处理失败');
+            }
         }
         
         // 显示编辑礼品模态框
@@ -3139,26 +3353,55 @@
             
             modalContent.innerHTML = `
                 <form id="edit-gift-form">
-                    <input type="hidden" id="edit-gift-id" value="${gift.id}">
+                    <input type="hidden" id="edit-gift-id" value="${escapeHtml(gift.id)}">
                     <div class="mb-4">
                         <label for="edit-gift-name" class="block text-sm font-medium text-gray-700 mb-1">礼品名称</label>
-                        <input type="text" id="edit-gift-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.name}" required>
+                        <input type="text" id="edit-gift-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${escapeHtml(gift.name)}" required>
                     </div>
                     <div class="mb-4">
                         <label for="edit-gift-description" class="block text-sm font-medium text-gray-700 mb-1">礼品描述</label>
-                        <textarea id="edit-gift-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>${gift.description}</textarea>
+                        <textarea id="edit-gift-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>${escapeHtml(gift.description)}</textarea>
                     </div>
                     <div class="mb-4">
                         <label for="edit-gift-points" class="block text-sm font-medium text-gray-700 mb-1">所需积分</label>
                         <input type="number" id="edit-gift-points" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.points}" min="1" required>
+                        <p class="mt-1 text-xs text-gray-500">当前积分区域：初级 ${formatPointsRange(pointsSettings.primary)} / 中级 ${formatPointsRange(pointsSettings.secondary)} / 高级 ${formatPointsRange(pointsSettings.tertiary)}</p>
                     </div>
                     <div class="mb-4">
                         <label for="edit-gift-stock" class="block text-sm font-medium text-gray-700 mb-1">库存数量</label>
                         <input type="number" id="edit-gift-stock" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.stock}" min="0" required>
                     </div>
                     <div class="mb-4">
-                        <label for="edit-gift-image" class="block text-sm font-medium text-gray-700 mb-1">礼品图片URL</label>
-                        <input type="url" id="edit-gift-image" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${gift.image}" required>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">礼品图片</label>
+                        <div class="space-y-3 rounded-lg border border-gray-200 p-4 bg-gray-50">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-white overflow-hidden" id="edit-image-preview">
+                                    <img src="${escapeHtml(gift.image)}" alt="${escapeHtml(gift.name)}" class="w-full h-full object-cover rounded-md">
+                                </div>
+                                <div class="flex-grow space-y-3">
+                                    <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" name="edit-gift-image-mode" value="keep" class="mr-2" checked>
+                                        保留当前图片
+                                    </label>
+                                    <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" name="edit-gift-image-mode" value="upload" class="mr-2">
+                                        上传本地图片
+                                    </label>
+                                    <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" name="edit-gift-image-mode" value="url" class="mr-2">
+                                        使用图片链接
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="edit-upload-group" class="hidden">
+                                <input type="file" id="edit-gift-image-file" class="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" accept="image/*">
+                                <p class="mt-1 text-xs text-gray-500">上传新图片后会替换当前礼品图</p>
+                            </div>
+                            <div id="edit-url-group" class="hidden">
+                                <input type="text" id="edit-gift-image-url" class="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" value="${escapeHtml(gift.image)}" placeholder="请输入礼品图片链接">
+                                <p class="mt-1 text-xs text-gray-500">可切换为链接图，预览会实时更新</p>
+                            </div>
+                        </div>
                     </div>
                 </form>
             `;
@@ -3173,6 +3416,7 @@
             
             // 绑定事件
             document.getElementById('cancel-edit-gift').addEventListener('click', hideModal);
+            bindGiftImageOptionEvents('edit', gift.image);
             
             document.getElementById('confirm-edit-gift').addEventListener('click', function() {
                 const form = document.getElementById('edit-gift-form');
@@ -3186,37 +3430,42 @@
         }
         
         // 更新礼品
-        function updateGift() {
+        async function updateGift() {
             const giftId = document.getElementById('edit-gift-id').value;
             const name = document.getElementById('edit-gift-name').value.trim();
             const description = document.getElementById('edit-gift-description').value.trim();
             const points = parseInt(document.getElementById('edit-gift-points').value);
             const stock = parseInt(document.getElementById('edit-gift-stock').value);
-            const image = document.getElementById('edit-gift-image').value.trim();
             
             const gift = gifts.find(g => g.id === giftId);
             
             if (!gift) return;
-            
-            // 更新礼品信息
-            gift.name = name;
-            gift.description = description;
-            gift.points = points;
-            gift.stock = stock;
-            gift.image = image;
-            gift.status = stock > 0 ? 'available' : 'unavailable';
-            
-            // 保存数据
-            localStorage.setItem('gifts', JSON.stringify(gifts));
-            
-            // 隐藏模态框
-            hideModal();
-            
-            // 显示成功提示
-            showToast('success', '更新成功', '礼品信息已更新');
-            
-            // 重新加载礼品列表
-            loadAdminGifts();
+
+            try {
+                const image = await resolveGiftImage('edit', gift.image);
+
+                // 更新礼品信息
+                gift.name = name;
+                gift.description = description;
+                gift.points = points;
+                gift.stock = stock;
+                gift.image = image;
+                gift.status = stock > 0 ? 'available' : 'unavailable';
+                
+                // 保存数据
+                localStorage.setItem('gifts', JSON.stringify(gifts));
+                
+                // 隐藏模态框
+                hideModal();
+                
+                // 显示成功提示
+                showToast('success', '更新成功', '礼品信息已更新');
+                
+                // 重新加载礼品列表
+                loadAdminGifts();
+            } catch (error) {
+                showToast('error', '更新失败', error.message || '礼品图片处理失败');
+            }
         }
         
         // 删除礼品
