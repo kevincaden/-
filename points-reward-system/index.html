@@ -12,9 +12,10 @@
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Tailwind 配置 -->
-    <script>
+    <script id="legacy-local-app-script" type="text/plain">
         tailwind.config = {
             theme: {
                 extend: {
@@ -45,6 +46,7 @@
             }
         }
     </script>
+    <script src="./app.js"></script>
     <style type="text/tailwindcss">
         @layer utilities {
             .text-shadow {
@@ -2446,8 +2448,20 @@
         </div>
     </div>
 
+    <!-- Axios for API requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    
     <!-- JavaScript -->
     <script>
+        // SheetDB API configuration
+        const SHEETDB_CONFIG = {
+            API_URL: 'https://sheetdb.io/api/v1/your-api-key', // Replace with your actual SheetDB API URL
+            ENDPOINTS: {
+                USERS: '/users',
+                GIFTS: '/gifts',
+                HISTORIES: '/histories'
+            }
+        };
         // 全局变量
         let currentUser = null;
         let users = [];
@@ -2679,9 +2693,9 @@
         }
         
         // 初始化应用
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // 初始化数据
-            initData();
+            await initData();
             
             // 绑定事件
             bindEvents();
@@ -2691,7 +2705,7 @@
         });
         
         // 初始化数据
-        function initData() {
+        async function initData() {
             // 读取积分区域设置
             const storedPointsSettings = localStorage.getItem('pointsSettings');
             const storedPointsSettingsVersion = localStorage.getItem('pointsSettingsVersion');
@@ -2704,179 +2718,157 @@
                 savePointsSettingsToStorage();
             }
             
-            // 检查本地存储中是否已有数据
-            if (!localStorage.getItem('users')) {
-                // 创建默认管理员账户
-                const admin = {
-                    id: 'admin1',
-                    username: 'admin',
-                    password: 'admin123',
-                    email: 'admin@example.com',
-                    role: 'admin',
-                    points: 0,
-                    joinDate: new Date().toISOString(),
-                    referrerId: null,
-                    referrals: [],
-                    pointsHistory: []
-                };
+            // 从SheetDB API获取数据
+            try {
+                // 获取用户数据
+                const usersResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS);
+                users = usersResponse.data.map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    password: user.password,
+                    points: parseInt(user.points) || 0,
+                    is_admin: user.is_admin === 'true' || user.is_admin === true,
+                    role: user.is_admin === 'true' || user.is_admin === true ? 'admin' : 'user'
+                }));
                 
-                // 创建示例用户
-                const user1 = {
-                    id: 'user1',
-                    username: 'user1',
-                    password: 'user123',
-                    email: 'user1@example.com',
-                    role: 'user',
+                // 获取礼品数据
+                const giftsResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS);
+                gifts = giftsResponse.data.map(gift => ({
+                    id: gift.id,
+                    name: gift.name,
+                    image: gift.image,
+                    points: parseInt(gift.points) || 0,
+                    stock: parseInt(gift.stock) || 0,
+                    status: parseInt(gift.stock) > 0 ? 'available' : 'unavailable'
+                }));
+                
+                // 获取历史记录数据
+                const historiesResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.HISTORIES);
+                redemptions = historiesResponse.data.map(history => ({
+                    id: history.id,
+                    userId: history.user_id,
+                    giftName: history.gift_name,
+                    points: parseInt(history.points_used) || 0,
+                    status: 'completed',
+                    createDate: history.created_at
+                }));
+                
+                pointsHistory = redemptions.map(redemption => ({
+                    id: redemption.id,
+                    userId: redemption.userId,
+                    type: 'redeem',
+                    amount: redemption.points,
+                    description: `兑换礼品: ${redemption.giftName}`,
+                    date: redemption.createDate
+                }));
+            } catch (error) {
+                console.error('Error fetching data from SheetDB:', error);
+                // 如果API请求失败，使用默认数据
+                useDefaultData();
+            }
+        }
+        
+        // 使用默认数据（当API请求失败时）
+        function useDefaultData() {
+            // 创建默认管理员账户
+            const admin = {
+                id: '1',
+                username: 'admin',
+                password: 'admin123',
+                points: 0,
+                is_admin: true,
+                role: 'admin'
+            };
+            
+            // 创建示例用户
+            const user1 = {
+                id: '2',
+                username: 'user1',
+                password: 'user123',
+                points: 100,
+                is_admin: false,
+                role: 'user'
+            };
+            
+            // 保存用户数据
+            users = [admin, user1];
+            
+            // 创建示例礼品 - 按等级分类
+            gifts = [
+                // 初级礼品 (25-50积分)
+                {
+                    id: '1',
+                    name: '时尚U盘',
+                    image: 'https://p26-doubao-search-sign.byteimg.com/labis/image/ca0729e5ac6ce52a357a7d40699e3347~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=G50V4LRFxlYFJB4dnwwGhIkWOfY%3D',
+                    points: 30,
+                    stock: 20,
+                    status: 'available'
+                },
+                {
+                    id: '2',
+                    name: '精美陶瓷摆件',
+                    image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
+                    points: 40,
+                    stock: 15,
+                    status: 'available'
+                },
+                {
+                    id: '3',
+                    name: '蓝牙音箱',
+                    image: 'https://p3-doubao-search-sign.byteimg.com/labis/27a87d5ce6419724f54053c226de63b1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=4ZwGcLZmF4cOEDRLbrHo8NwSIrA%3D',
+                    points: 50,
+                    stock: 12,
+                    status: 'available'
+                },
+                
+                // 中级礼品 (50-75积分)
+                {
+                    id: '4',
+                    name: '无线蓝牙耳机',
+                    image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                    points: 60,
+                    stock: 10,
+                    status: 'available'
+                },
+                {
+                    id: '5',
+                    name: '木质工艺品',
+                    image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
+                    points: 70,
+                    stock: 8,
+                    status: 'available'
+                },
+                {
+                    id: '6',
+                    name: '智能手环',
+                    image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
+                    points: 75,
+                    stock: 5,
+                    status: 'available'
+                },
+                
+                // 高级礼品 (75-100积分)
+                {
+                    id: '7',
+                    name: '智能手表',
+                    image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
+                    points: 85,
+                    stock: 3,
+                    status: 'available'
+                },
+                {
+                    id: '8',
+                    name: '平板电脑',
+                    image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
                     points: 100,
-                    joinDate: new Date().toISOString(),
-                    referrerId: null,
-                    referrals: [],
-                    pointsHistory: [
-                        {
-                            id: 'ph1',
-                            userId: 'user1',
-                            type: 'earn',
-                            amount: 50,
-                            description: '初始积分',
-                            date: new Date().toISOString()
-                        },
-                        {
-                            id: 'ph2',
-                            userId: 'user1',
-                            type: 'earn',
-                            amount: 50,
-                            description: '活动奖励',
-                            date: new Date(Date.now() - 86400000).toISOString()
-                        }
-                    ]
-                };
-                
-                // 保存用户数据
-                users = [admin, user1];
-                localStorage.setItem('users', JSON.stringify(users));
-            } else {
-                users = JSON.parse(localStorage.getItem('users'));
-            }
+                    stock: 2,
+                    status: 'available'
+                }
+            ];
             
-            // 检查礼品数据
-            if (!localStorage.getItem('gifts')) {
-                // 创建示例礼品 - 按等级分类
-                gifts = [
-                    // 初级礼品 (25-50积分)
-                    {
-                        id: 'gift1',
-                        name: '时尚U盘',
-                        description: '高速USB 3.0 U盘，32GB容量，防水防尘',
-                        points: 30,
-                        stock: 20,
-                        image: 'https://p26-doubao-search-sign.byteimg.com/labis/image/ca0729e5ac6ce52a357a7d40699e3347~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=G50V4LRFxlYFJB4dnwwGhIkWOfY%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift2',
-                        name: '精美陶瓷摆件',
-                        description: '创意陶瓷摆件，家居装饰品，增添生活情趣',
-                        points: 40,
-                        stock: 15,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/08a57cd753724d7f17f8f35e6c4f85be~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=BfkQ03nIiakt1VVAFmCDrrNVyIw%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift3',
-                        name: '蓝牙音箱',
-                        description: '便携式蓝牙音箱，重低音效果，户外聚会必备',
-                        points: 50,
-                        stock: 12,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/27a87d5ce6419724f54053c226de63b1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=4ZwGcLZmF4cOEDRLbrHo8NwSIrA%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    
-                    // 中级礼品 (50-75积分)
-                    {
-                        id: 'gift4',
-                        name: '无线蓝牙耳机',
-                        description: '高品质无线蓝牙耳机，支持蓝牙5.0，续航长达24小时',
-                        points: 60,
-                        stock: 10,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift5',
-                        name: '木质工艺品',
-                        description: '精致木质工艺品，手工雕刻，送礼自用两相宜',
-                        points: 70,
-                        stock: 8,
-                        image: 'https://p11-doubao-search-sign.byteimg.com/labis/image/4a2796197fe4486b9e6575ac33950eeb~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=SHtryLuFQW2ej%2BxciDoy6V4Jyu0%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift6',
-                        name: '智能手环',
-                        description: '多功能智能手环，支持心率监测、睡眠监测、运动计步等功能',
-                        points: 75,
-                        stock: 5,
-                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    
-                    // 高级礼品 (75-100积分)
-                    {
-                        id: 'gift7',
-                        name: '智能手表',
-                        description: '多功能智能手表，支持心率监测、GPS定位、运动追踪等功能',
-                        points: 85,
-                        stock: 3,
-                        image: 'https://p3-doubao-search-sign.byteimg.com/labis/45469984bfc74f2f039cbcd4fa251c00~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=nzzeFVXIIj%2B0SxRMDiDkgvX9miE%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    },
-                    {
-                        id: 'gift8',
-                        name: '平板电脑',
-                        description: '高清平板电脑，10英寸屏幕，64GB存储，适合娱乐和工作',
-                        points: 100,
-                        stock: 2,
-                        image: 'https://p26-doubao-search-sign.byteimg.com/isp-i18n-media/image/59c0acaa1de570e460429cc14e4c3919~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791122534&x-signature=Obng3qCaaVJ%2B4hLOcXBOCXedVoI%3D',
-                        status: 'available',
-                        createDate: new Date().toISOString()
-                    }
-                ];
-                
-                localStorage.setItem('gifts', JSON.stringify(gifts));
-            } else {
-                gifts = JSON.parse(localStorage.getItem('gifts'));
-            }
-            
-            // 检查兑换记录
-            if (!localStorage.getItem('redemptions')) {
-                redemptions = [];
-                localStorage.setItem('redemptions', JSON.stringify(redemptions));
-            } else {
-                redemptions = JSON.parse(localStorage.getItem('redemptions'));
-            }
-            
-            // 检查积分记录
-            if (!localStorage.getItem('pointsHistory')) {
-                pointsHistory = [];
-                
-                // 添加用户的积分记录
-                users.forEach(user => {
-                    if (user.pointsHistory && user.pointsHistory.length > 0) {
-                        pointsHistory.push(...user.pointsHistory);
-                    }
-                });
-                
-                localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
-            } else {
-                pointsHistory = JSON.parse(localStorage.getItem('pointsHistory'));
-            }
+            // 初始化兑换记录
+            redemptions = [];
+            pointsHistory = [];
         }
         
         // 绑定事件
@@ -3134,7 +3126,7 @@
         }
         
         // 处理注册
-        function handleRegister() {
+        async function handleRegister() {
             const username = document.getElementById('register-username').value.trim();
             const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value.trim();
@@ -3160,76 +3152,52 @@
             
             // 创建新用户
             const newUser = {
-                id: 'user' + Date.now(),
+                id: Date.now().toString(),
                 username: username,
                 password: password,
-                email: email,
-                role: 'user',
                 points: 30, // 注册奖励积分
-                joinDate: new Date().toISOString(),
-                referrerId: referralId || null,
-                referrals: [],
-                pointsHistory: [
-                    {
-                        id: 'ph' + Date.now(),
-                        userId: 'user' + Date.now(),
-                        type: 'earn',
-                        amount: 30,
-                        description: '注册奖励',
-                        date: new Date().toISOString()
-                    }
-                ]
+                is_admin: false
             };
             
-            // 添加积分记录
-            const pointsRecord = {
-                id: 'ph' + Date.now(),
-                userId: newUser.id,
-                type: 'earn',
-                amount: 30,
-                description: '注册奖励',
-                date: new Date().toISOString()
-            };
-            
-            pointsHistory.push(pointsRecord);
-            
-            // 处理推荐奖励
-            if (referralId) {
-                const referrer = users.find(u => u.id === referralId);
+            try {
+                // 发送新用户数据到SheetDB API
+                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS, {
+                    data: [newUser]
+                });
                 
-                if (referrer) {
-                    // 给推荐人添加积分
-                    referrer.points += 50;
-                    referrer.referrals.push(newUser.id);
+                // 处理推荐奖励
+                if (referralId) {
+                    const referrer = users.find(u => u.id === referralId);
                     
-                    // 添加推荐人积分记录
-                    const referrerPointsRecord = {
-                        id: 'ph' + (Date.now() + 1),
-                        userId: referrer.id,
-                        type: 'earn',
-                        amount: 50,
-                        description: '推荐好友注册奖励',
-                        date: new Date().toISOString()
-                    };
-                    
-                    referrer.pointsHistory.push(referrerPointsRecord);
-                    pointsHistory.push(referrerPointsRecord);
+                    if (referrer) {
+                        // 给推荐人添加积分
+                        referrer.points += 50;
+                        
+                        // 更新推荐人数据到SheetDB API
+                        await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + referrer.id, {
+                            data: {
+                                points: referrer.points.toString()
+                            }
+                        });
+                    }
                 }
+                
+                // 重新加载用户数据
+                await initData();
+                
+                // 自动登录新用户
+                const user = users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    
+                    // 显示主应用
+                    showMainApp();
+                }
+            } catch (error) {
+                console.error('Error registering user:', error);
+                showAuthError('注册失败，请稍后重试');
             }
-            
-            // 添加新用户
-            users.push(newUser);
-            
-            // 保存数据
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
-            
-            // 自动登录新用户
-            currentUser = newUser;
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
-            
-            // 显示主应用
-            showMainApp();
         }
         
         // 处理退出登录
@@ -3791,7 +3759,7 @@
         }
         
         // 处理礼品兑换
-        function handleRedeem() {
+        async function handleRedeem() {
             const giftId = document.getElementById('redeem-btn').getAttribute('data-gift-id');
             const gift = gifts.find(g => g.id === giftId);
             
@@ -3800,56 +3768,63 @@
                 return;
             }
             
-            // 创建兑换记录
-            const redemption = {
-                id: 'r' + Date.now(),
-                userId: currentUser.id,
-                giftId: gift.id,
-                points: gift.points,
-                status: 'pending',
-                requestDate: new Date().toISOString(),
-                completeDate: null
-            };
-            
-            // 添加兑换记录
-            redemptions.push(redemption);
-            
-            // 扣除用户积分
-            currentUser.points -= gift.points;
-            
-            // 添加积分记录
-            const pointsRecord = {
-                id: 'ph' + Date.now(),
-                userId: currentUser.id,
-                type: 'spend',
-                amount: gift.points,
-                description: `兑换礼品: ${gift.name}`,
-                date: new Date().toISOString()
-            };
-            
-            currentUser.pointsHistory.push(pointsRecord);
-            pointsHistory.push(pointsRecord);
-            
-            // 减少礼品库存
-            gift.stock -= 1;
-            if (gift.stock <= 0) {
-                gift.status = 'unavailable';
+            try {
+                // 扣除用户积分
+                currentUser.points -= gift.points;
+                
+                // 更新用户数据到SheetDB API
+                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + currentUser.id, {
+                    data: {
+                        points: currentUser.points.toString()
+                    }
+                });
+                
+                // 减少礼品库存
+                gift.stock -= 1;
+                if (gift.stock <= 0) {
+                    gift.status = 'unavailable';
+                }
+                
+                // 更新礼品数据到SheetDB API
+                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + gift.id, {
+                    data: {
+                        stock: gift.stock.toString()
+                    }
+                });
+                
+                // 创建兑换记录
+                const redemption = {
+                    id: Date.now().toString(),
+                    user_id: currentUser.id,
+                    gift_name: gift.name,
+                    points_used: gift.points.toString(),
+                    created_at: new Date().toISOString()
+                };
+                
+                // 添加兑换记录到SheetDB API
+                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.HISTORIES, {
+                    data: [redemption]
+                });
+                
+                // 重新加载数据
+                await initData();
+                
+                // 更新当前用户
+                const updatedUser = users.find(u => u.id === currentUser.id);
+                if (updatedUser) {
+                    currentUser = updatedUser;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                }
+                
+                // 显示成功提示
+                showToast('success', '兑换成功', `您已成功兑换礼品: ${gift.name}`);
+                
+                // 返回礼品商城
+                showPage('shop');
+            } catch (error) {
+                console.error('Error redeeming gift:', error);
+                showToast('error', '兑换失败', '请稍后重试');
             }
-            
-            // 保存数据
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('gifts', JSON.stringify(gifts));
-            localStorage.setItem('redemptions', JSON.stringify(redemptions));
-            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
-            
-            // 更新当前用户
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            // 显示成功提示
-            showToast('success', '兑换成功', `您已成功兑换礼品: ${gift.name}`);
-            
-            // 返回礼品商城
-            showPage('shop');
         }
         
         // 加载兑换记录
@@ -4783,21 +4758,20 @@
                 
                 // 创建新礼品
                 const newGift = {
-                    id: 'gift' + Date.now(),
+                    id: Date.now().toString(),
                     name: name,
-                    description: description,
-                    points: points,
-                    stock: stock,
                     image: image,
-                    status: stock > 0 ? 'available' : 'unavailable',
-                    createDate: new Date().toISOString()
+                    points: points.toString(),
+                    stock: stock.toString()
                 };
                 
-                // 添加新礼品
-                gifts.push(newGift);
+                // 发送新礼品数据到SheetDB API
+                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS, {
+                    data: [newGift]
+                });
                 
-                // 保存数据
-                localStorage.setItem('gifts', JSON.stringify(gifts));
+                // 重新加载礼品数据
+                await initData();
                 
                 // 隐藏模态框
                 hideModal();
@@ -4808,6 +4782,7 @@
                 // 重新加载礼品列表
                 loadAdminGifts();
             } catch (error) {
+                console.error('Error adding gift:', error);
                 showToast('error', '添加失败', error.message || '礼品图片处理失败');
             }
         }
@@ -4925,8 +4900,18 @@
                 gift.image = image;
                 gift.status = stock > 0 ? 'available' : 'unavailable';
                 
-                // 保存数据
-                localStorage.setItem('gifts', JSON.stringify(gifts));
+                // 更新礼品数据到SheetDB API
+                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + giftId, {
+                    data: {
+                        name: name,
+                        image: image,
+                        points: points.toString(),
+                        stock: stock.toString()
+                    }
+                });
+                
+                // 重新加载礼品数据
+                await initData();
                 
                 // 隐藏模态框
                 hideModal();
@@ -4937,12 +4922,13 @@
                 // 重新加载礼品列表
                 loadAdminGifts();
             } catch (error) {
+                console.error('Error updating gift:', error);
                 showToast('error', '更新失败', error.message || '礼品图片处理失败');
             }
         }
         
         // 删除礼品
-        function deleteGift(giftId) {
+        async function deleteGift(giftId) {
             if (!confirm('确定要删除此礼品吗？此操作不可撤销。')) {
                 return;
             }
@@ -4955,17 +4941,22 @@
                 return;
             }
             
-            // 删除礼品
-            gifts = gifts.filter(g => g.id !== giftId);
-            
-            // 保存数据
-            localStorage.setItem('gifts', JSON.stringify(gifts));
-            
-            // 显示成功提示
-            showToast('success', '删除成功', '礼品已删除');
-            
-            // 重新加载礼品列表
-            loadAdminGifts();
+            try {
+                // 从SheetDB API删除礼品
+                await axios.delete(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + giftId);
+                
+                // 重新加载礼品数据
+                await initData();
+                
+                // 显示成功提示
+                showToast('success', '删除成功', '礼品已删除');
+                
+                // 重新加载礼品列表
+                loadAdminGifts();
+            } catch (error) {
+                console.error('Error deleting gift:', error);
+                showToast('error', '删除失败', '请稍后重试');
+            }
         }
         
         // 加载管理员积分管理
@@ -5038,7 +5029,7 @@
         }
         
         // 发放积分
-        function awardPoints() {
+        async function awardPoints() {
             const userId = document.getElementById('user-select').value;
             const amount = parseInt(document.getElementById('points-amount').value);
             const reason = document.getElementById('points-reason').value.trim();
@@ -5060,41 +5051,42 @@
                 return;
             }
             
-            // 增加用户积分
-            user.points += amount;
-            
-            // 添加积分记录
-            const pointsRecord = {
-                id: 'ph' + Date.now(),
-                userId: user.id,
-                type: 'earn',
-                amount: amount,
-                description: reason,
-                date: new Date().toISOString()
-            };
-            
-            user.pointsHistory.push(pointsRecord);
-            pointsHistory.push(pointsRecord);
-            
-            // 如果是当前用户，更新当前用户
-            if (currentUser && currentUser.id === userId) {
-                currentUser = user;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                updateUserInfo();
+            try {
+                // 增加用户积分
+                user.points += amount;
+                
+                // 更新用户数据到SheetDB API
+                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + userId, {
+                    data: {
+                        points: user.points.toString()
+                    }
+                });
+                
+                // 重新加载用户数据
+                await initData();
+                
+                // 如果是当前用户，更新当前用户
+                if (currentUser && currentUser.id === userId) {
+                    const updatedUser = users.find(u => u.id === userId);
+                    if (updatedUser) {
+                        currentUser = updatedUser;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        updateUserInfo();
+                    }
+                }
+                
+                // 重置表单
+                document.getElementById('award-points-form').reset();
+                
+                // 显示成功提示
+                showToast('success', '发放成功', `已向 ${user.username} 发放 ${amount} 积分`);
+                
+                // 重新加载积分记录
+                loadAdminPointsHistory();
+            } catch (error) {
+                console.error('Error awarding points:', error);
+                showToast('error', '发放失败', '请稍后重试');
             }
-            
-            // 保存数据
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('pointsHistory', JSON.stringify(pointsHistory));
-            
-            // 重置表单
-            document.getElementById('award-points-form').reset();
-            
-            // 显示成功提示
-            showToast('success', '发放成功', `已向 ${user.username} 发放 ${amount} 积分`);
-            
-            // 重新加载积分记录
-            loadAdminPointsHistory();
         }
         
         // 加载管理员兑换管理
