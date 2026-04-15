@@ -1,5 +1,5 @@
-// Sheet.best API configuration
-const SHEETBEST_CONFIG = {
+// 全局变量
+let SHEETBEST_CONFIG = {
     API_URL: 'https://api.sheetbest.com/sheets/87572aa7-279a-4a0d-82b6-6ed615c0f9b7',
     ENDPOINTS: {
         USERS: '/tabs/users',
@@ -11,15 +11,24 @@ const SHEETBEST_CONFIG = {
 // 默认占位图
 const DEFAULT_PLACEHOLDER = 'placeholder.png';
 
-// 全局变量
+// 全局状态变量
 let currentUser = null;
 let users = [];
 let gifts = [];
 let redemptions = [];
 let pointsHistory = [];
 
+// 页面加载完成后执行
+window.onload = function() {
+    // 显示加载状态
+    showLoadingState();
+    
+    // 初始化应用
+    initApp();
+};
+
 // 初始化应用
-document.addEventListener('DOMContentLoaded', async function() {
+async function initApp() {
     try {
         // 初始化数据
         await initData();
@@ -32,8 +41,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Error initializing app:', error);
         showToast('error', '初始化失败', '应用初始化失败，请刷新页面重试');
+    } finally {
+        // 隐藏加载状态
+        hideLoadingState();
     }
-});
+}
+
+// 显示加载状态
+function showLoadingState() {
+    // 检查是否已有加载元素
+    let loadingElement = document.getElementById('loading-state');
+    if (!loadingElement) {
+        // 创建加载元素
+        loadingElement = document.createElement('div');
+        loadingElement.id = 'loading-state';
+        loadingElement.className = 'fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50';
+        loadingElement.innerHTML = `
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-gray-800">正在加载数据...</h2>
+                <p class="text-gray-600 mt-2">请稍候，数据正在同步中</p>
+            </div>
+        `;
+        document.body.appendChild(loadingElement);
+    } else {
+        loadingElement.classList.remove('hidden');
+    }
+}
+
+// 隐藏加载状态
+function hideLoadingState() {
+    const loadingElement = document.getElementById('loading-state');
+    if (loadingElement) {
+        loadingElement.classList.add('hidden');
+    }
+}
 
 // 初始化数据
 async function initData() {
