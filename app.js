@@ -8,6 +8,9 @@ const SHEETBEST_CONFIG = {
     }
 };
 
+// 默认占位图
+const DEFAULT_PLACEHOLDER = 'placeholder.png';
+
 // 全局变量
 let currentUser = null;
 let users = [];
@@ -228,13 +231,16 @@ function bindEvents() {
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
     // 导航链接
-    document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            showPage(page);
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    if (navLinks) {
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                showPage(page);
+            });
         });
-    });
+    }
     
     // 兑换按钮
     const redeemBtn = document.getElementById('redeem-btn');
@@ -255,28 +261,54 @@ function bindEvents() {
 
 // 显示登录表单
 function showLoginForm() {
-    document.getElementById('login-form').classList.remove('hidden');
-    document.getElementById('register-form').classList.add('hidden');
-    document.getElementById('login-tab').classList.add('active', 'text-primary', 'border-primary');
-    document.getElementById('login-tab').classList.remove('text-gray-500', 'border-transparent');
-    document.getElementById('register-tab').classList.add('text-gray-500', 'border-transparent');
-    document.getElementById('register-tab').classList.remove('active', 'text-primary', 'border-primary');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginTab = document.getElementById('login-tab');
+    const registerTab = document.getElementById('register-tab');
+    
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (registerForm) registerForm.classList.add('hidden');
+    if (loginTab) {
+        loginTab.classList.add('active', 'text-primary', 'border-primary');
+        loginTab.classList.remove('text-gray-500', 'border-transparent');
+    }
+    if (registerTab) {
+        registerTab.classList.add('text-gray-500', 'border-transparent');
+        registerTab.classList.remove('active', 'text-primary', 'border-primary');
+    }
 }
 
 // 显示注册表单
 function showRegisterForm() {
-    document.getElementById('register-form').classList.remove('hidden');
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('register-tab').classList.add('active', 'text-primary', 'border-primary');
-    document.getElementById('register-tab').classList.remove('text-gray-500', 'border-transparent');
-    document.getElementById('login-tab').classList.add('text-gray-500', 'border-transparent');
-    document.getElementById('login-tab').classList.remove('active', 'text-primary', 'border-primary');
+    const registerForm = document.getElementById('register-form');
+    const loginForm = document.getElementById('login-form');
+    const registerTab = document.getElementById('register-tab');
+    const loginTab = document.getElementById('login-tab');
+    
+    if (registerForm) registerForm.classList.remove('hidden');
+    if (loginForm) loginForm.classList.add('hidden');
+    if (registerTab) {
+        registerTab.classList.add('active', 'text-primary', 'border-primary');
+        registerTab.classList.remove('text-gray-500', 'border-transparent');
+    }
+    if (loginTab) {
+        loginTab.classList.add('text-gray-500', 'border-transparent');
+        loginTab.classList.remove('active', 'text-primary', 'border-primary');
+    }
 }
 
 // 处理登录
 async function handleLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value.trim();
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    
+    if (!loginUsername || !loginPassword) {
+        showAuthError('登录表单元素不存在');
+        return;
+    }
+    
+    const username = loginUsername.value.trim();
+    const password = loginPassword.value.trim();
     
     // 验证输入
     if (!username || !password) {
@@ -309,10 +341,20 @@ async function handleLogin() {
 
 // 处理注册
 async function handleRegister() {
-    const username = document.getElementById('register-username').value.trim();
-    const email = document.getElementById('register-email').value.trim();
-    const password = document.getElementById('register-password').value.trim();
-    const referralId = document.getElementById('register-referral').value.trim();
+    const registerUsername = document.getElementById('register-username');
+    const registerEmail = document.getElementById('register-email');
+    const registerPassword = document.getElementById('register-password');
+    const registerReferral = document.getElementById('register-referral');
+    
+    if (!registerUsername || !registerEmail || !registerPassword) {
+        showAuthError('注册表单元素不存在');
+        return;
+    }
+    
+    const username = registerUsername.value.trim();
+    const email = registerEmail.value.trim();
+    const password = registerPassword.value.trim();
+    const referralId = registerReferral ? registerReferral.value.trim() : '';
     
     // 验证输入
     if (!username || !email || !password) {
@@ -426,14 +468,20 @@ function checkLoginStatus() {
 
 // 显示登录界面
 function showLoginScreen() {
-    document.getElementById('login-screen').classList.remove('hidden');
-    document.getElementById('main-app').classList.add('hidden');
+    const loginScreen = document.getElementById('login-screen');
+    const mainApp = document.getElementById('main-app');
+    
+    if (loginScreen) loginScreen.classList.remove('hidden');
+    if (mainApp) mainApp.classList.add('hidden');
 }
 
 // 显示主应用
 function showMainApp() {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
+    const loginScreen = document.getElementById('login-screen');
+    const mainApp = document.getElementById('main-app');
+    
+    if (loginScreen) loginScreen.classList.add('hidden');
+    if (mainApp) mainApp.classList.remove('hidden');
     
     // 更新用户信息
     updateUserInfo();
@@ -445,8 +493,11 @@ function showMainApp() {
 // 更新用户信息
 function updateUserInfo() {
     if (currentUser) {
-        document.getElementById('user-name').textContent = currentUser.username;
-        document.getElementById('user-points').textContent = currentUser.points;
+        const userName = document.getElementById('user-name');
+        const userPoints = document.getElementById('user-points');
+        
+        if (userName) userName.textContent = currentUser.username;
+        if (userPoints) userPoints.textContent = currentUser.points;
         
         // 显示或隐藏管理入口
         const adminLink = document.querySelector('[data-page="admin"]');
@@ -463,9 +514,12 @@ function updateUserInfo() {
 // 显示页面
 function showPage(page) {
     // 隐藏所有页面
-    document.querySelectorAll('.page-content').forEach(content => {
-        content.classList.add('hidden');
-    });
+    const pageContents = document.querySelectorAll('.page-content');
+    if (pageContents) {
+        pageContents.forEach(content => {
+            content.classList.add('hidden');
+        });
+    }
     
     // 显示指定页面
     const targetPage = document.getElementById(page + '-page');
@@ -474,13 +528,16 @@ function showPage(page) {
     }
     
     // 更新导航状态
-    document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
-        if (link.getAttribute('data-page') === page) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    if (navLinks) {
+        navLinks.forEach(link => {
+            if (link.getAttribute('data-page') === page) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    }
     
     // 加载页面数据
     switch (page) {
@@ -501,9 +558,18 @@ function showPage(page) {
 
 // 筛选礼品
 function filterGifts() {
-    const searchTerm = document.getElementById('gift-search').value.toLowerCase().trim();
-    const filter = document.getElementById('gift-filter').value;
-    const sort = document.getElementById('gift-sort').value;
+    const giftSearch = document.getElementById('gift-search');
+    const giftFilter = document.getElementById('gift-filter');
+    const giftSort = document.getElementById('gift-sort');
+    
+    if (!giftSearch || !giftFilter || !giftSort) {
+        console.error('Gift search/filter/sort elements not found');
+        return;
+    }
+    
+    const searchTerm = giftSearch.value.toLowerCase().trim();
+    const filter = giftFilter.value;
+    const sort = giftSort.value;
     
     let filteredGifts = [...gifts];
     
@@ -545,6 +611,11 @@ function filterGifts() {
 // 渲染礼品
 function renderGifts(giftsToRender) {
     const container = document.getElementById('gifts-container');
+    if (!container) {
+        console.error('Gifts container not found');
+        return;
+    }
+    
     container.innerHTML = '';
     
     if (giftsToRender.length === 0) {
@@ -563,9 +634,13 @@ function renderGifts(giftsToRender) {
     giftsToRender.forEach(gift => {
         const giftCard = document.createElement('div');
         giftCard.className = 'bg-white rounded-lg shadow overflow-hidden';
+        
+        // 确保礼品图片有默认值
+        const giftImage = gift.image || DEFAULT_PLACEHOLDER;
+        
         giftCard.innerHTML = `
             <div class="relative">
-                <img src="${gift.image}" alt="${gift.name}" class="w-full h-40 object-contain bg-gray-50 p-4">
+                <img src="${giftImage}" alt="${gift.name}" class="w-full h-40 object-contain bg-gray-50 p-4" onerror="this.src='${DEFAULT_PLACEHOLDER}';">
                 <div class="absolute top-2 right-2">
                     <span class="px-2 py-1 text-xs font-medium rounded-full ${gift.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                         ${gift.status === 'available' ? '可兑换' : '已售罄'}
@@ -593,12 +668,15 @@ function renderGifts(giftsToRender) {
     });
     
     // 绑定查看详情事件
-    document.querySelectorAll('.view-gift-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const giftId = this.getAttribute('data-id');
-            showGiftDetail(giftId);
+    const viewGiftBtns = document.querySelectorAll('.view-gift-btn');
+    if (viewGiftBtns) {
+        viewGiftBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const giftId = this.getAttribute('data-id');
+                showGiftDetail(giftId);
+            });
         });
-    });
+    }
 }
 
 // 显示礼品详情
@@ -607,32 +685,48 @@ function showGiftDetail(giftId) {
     
     if (!gift) return;
     
-    document.getElementById('gift-detail-name').textContent = gift.name;
-    document.getElementById('gift-detail-description').textContent = gift.description || '暂无描述';
-    document.getElementById('gift-detail-points').textContent = gift.points;
-    document.getElementById('gift-detail-stock').textContent = gift.stock;
-    document.getElementById('gift-detail-image').src = gift.image;
-    
+    const giftDetailName = document.getElementById('gift-detail-name');
+    const giftDetailDescription = document.getElementById('gift-detail-description');
+    const giftDetailPoints = document.getElementById('gift-detail-points');
+    const giftDetailStock = document.getElementById('gift-detail-stock');
+    const giftDetailImage = document.getElementById('gift-detail-image');
     const redeemBtn = document.getElementById('redeem-btn');
-    redeemBtn.setAttribute('data-gift-id', gift.id);
+    const giftDetailPage = document.getElementById('gift-detail-page');
+    const shopPage = document.getElementById('shop-page');
     
-    if (gift.status !== 'available' || currentUser.points < gift.points) {
-        redeemBtn.disabled = true;
-        redeemBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        redeemBtn.textContent = gift.status !== 'available' ? '已售罄' : '积分不足';
-    } else {
-        redeemBtn.disabled = false;
-        redeemBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        redeemBtn.textContent = '立即兑换';
+    if (giftDetailName) giftDetailName.textContent = gift.name;
+    if (giftDetailDescription) giftDetailDescription.textContent = gift.description || '暂无描述';
+    if (giftDetailPoints) giftDetailPoints.textContent = gift.points;
+    if (giftDetailStock) giftDetailStock.textContent = gift.stock;
+    if (giftDetailImage) giftDetailImage.src = gift.image || DEFAULT_PLACEHOLDER;
+    
+    if (redeemBtn) {
+        redeemBtn.setAttribute('data-gift-id', gift.id);
+        
+        if (gift.status !== 'available' || currentUser.points < gift.points) {
+            redeemBtn.disabled = true;
+            redeemBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            redeemBtn.textContent = gift.status !== 'available' ? '已售罄' : '积分不足';
+        } else {
+            redeemBtn.disabled = false;
+            redeemBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            redeemBtn.textContent = '立即兑换';
+        }
     }
     
-    document.getElementById('gift-detail-page').classList.remove('hidden');
-    document.getElementById('shop-page').classList.add('hidden');
+    if (giftDetailPage) giftDetailPage.classList.remove('hidden');
+    if (shopPage) shopPage.classList.add('hidden');
 }
 
 // 处理礼品兑换
 async function handleRedeem() {
-    const giftId = document.getElementById('redeem-btn').getAttribute('data-gift-id');
+    const redeemBtn = document.getElementById('redeem-btn');
+    if (!redeemBtn) {
+        showToast('error', '兑换失败', '兑换按钮不存在');
+        return;
+    }
+    
+    const giftId = redeemBtn.getAttribute('data-gift-id');
     const gift = gifts.find(g => g.id === giftId);
     
     if (!gift || gift.status !== 'available' || currentUser.points < gift.points) {
@@ -729,6 +823,13 @@ async function handleRedeem() {
 // 加载兑换记录
 function loadHistory() {
     const container = document.getElementById('history-list');
+    const noHistory = document.getElementById('no-history');
+    
+    if (!container) {
+        console.error('History list container not found');
+        return;
+    }
+    
     container.innerHTML = '';
     
     // 获取用户的兑换记录
@@ -738,11 +839,15 @@ function loadHistory() {
     
     // 显示无记录提示或记录列表
     if (userRedemptions.length === 0) {
-        document.getElementById('no-history').classList.remove('hidden');
-        container.parentElement.parentElement.parentElement.classList.add('hidden');
+        if (noHistory) noHistory.classList.remove('hidden');
+        if (container.parentElement && container.parentElement.parentElement && container.parentElement.parentElement.parentElement) {
+            container.parentElement.parentElement.parentElement.classList.add('hidden');
+        }
     } else {
-        document.getElementById('no-history').classList.add('hidden');
-        container.parentElement.parentElement.parentElement.classList.remove('hidden');
+        if (noHistory) noHistory.classList.add('hidden');
+        if (container.parentElement && container.parentElement.parentElement && container.parentElement.parentElement.parentElement) {
+            container.parentElement.parentElement.parentElement.classList.remove('hidden');
+        }
         
         userRedemptions.forEach(redemption => {
             const row = document.createElement('tr');
@@ -769,47 +874,63 @@ function loadHistory() {
 function loadProfile() {
     if (!currentUser) return;
     
-    document.getElementById('profile-username').value = currentUser.username;
-    document.getElementById('profile-email').value = currentUser.email || '';
-    document.getElementById('user-id').textContent = currentUser.id;
-    document.getElementById('join-date').textContent = formatDate(currentUser.joinDate || new Date().toISOString());
-    document.getElementById('current-points').textContent = currentUser.points;
-    document.getElementById('referrer').textContent = currentUser.referrerId ? '有' : '无';
+    const profileUsername = document.getElementById('profile-username');
+    const profileEmail = document.getElementById('profile-email');
+    const userId = document.getElementById('user-id');
+    const joinDate = document.getElementById('join-date');
+    const currentPoints = document.getElementById('current-points');
+    const referrer = document.getElementById('referrer');
+    
+    if (profileUsername) profileUsername.value = currentUser.username;
+    if (profileEmail) profileEmail.value = currentUser.email || '';
+    if (userId) userId.textContent = currentUser.id;
+    if (joinDate) joinDate.textContent = formatDate(currentUser.joinDate || new Date().toISOString());
+    if (currentPoints) currentPoints.textContent = currentUser.points;
+    if (referrer) referrer.textContent = currentUser.referrerId ? '有' : '无';
     
     // 加载积分记录
     const pointsHistoryContainer = document.getElementById('points-history');
-    pointsHistoryContainer.innerHTML = '';
+    const noPointsHistory = document.getElementById('no-points-history');
     
-    const userPointsHistory = pointsHistory
-        .filter(ph => ph.userId === currentUser.id)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5);
-    
-    if (userPointsHistory.length === 0) {
-        document.getElementById('no-points-history').classList.remove('hidden');
-    } else {
-        document.getElementById('no-points-history').classList.add('hidden');
+    if (pointsHistoryContainer) {
+        pointsHistoryContainer.innerHTML = '';
         
-        userPointsHistory.forEach(record => {
-            const recordElement = document.createElement('div');
-            recordElement.className = 'flex justify-between items-center pb-2 border-b border-gray-100';
-            recordElement.innerHTML = `
-                <div>
-                    <p class="text-gray-700">${record.description}</p>
-                    <p class="text-xs text-gray-500">${formatDate(record.date)}</p>
-                </div>
-                <span class="font-medium ${record.type === 'earn' ? 'text-green-600' : 'text-red-600'}">
-                    ${record.type === 'earn' ? '+' : '-' }${record.amount}
-                </span>
-            `;
-            pointsHistoryContainer.appendChild(recordElement);
-        });
+        const userPointsHistory = pointsHistory
+            .filter(ph => ph.userId === currentUser.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 5);
+        
+        if (userPointsHistory.length === 0) {
+            if (noPointsHistory) noPointsHistory.classList.remove('hidden');
+        } else {
+            if (noPointsHistory) noPointsHistory.classList.add('hidden');
+            
+            userPointsHistory.forEach(record => {
+                const recordElement = document.createElement('div');
+                recordElement.className = 'flex justify-between items-center pb-2 border-b border-gray-100';
+                recordElement.innerHTML = `
+                    <div>
+                        <p class="text-gray-700">${record.description}</p>
+                        <p class="text-xs text-gray-500">${formatDate(record.date)}</p>
+                    </div>
+                    <span class="font-medium ${record.type === 'earn' ? 'text-green-600' : 'text-red-600'}">
+                        ${record.type === 'earn' ? '+' : '-' }${record.amount}
+                    </span>
+                `;
+                pointsHistoryContainer.appendChild(recordElement);
+            });
+        }
     }
 }
 
 // 加载管理员用户列表
 function loadAdminUsers() {
     const container = document.getElementById('users-list');
+    if (!container) {
+        console.error('Users list container not found');
+        return;
+    }
+    
     container.innerHTML = '';
     
     users.forEach(user => {
