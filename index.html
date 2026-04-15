@@ -2453,13 +2453,13 @@
     
     <!-- JavaScript -->
     <script>
-        // SheetDB API configuration
-        const SHEETDB_CONFIG = {
-            API_URL: 'https://api.sheetbest.com/sheets/87572aa7-279a-4a0d-82b6-6ed615c0f9b7', // 只需要替换这里的接口地址即可，支持 SheetDB 与 Sheet.best 连接地址
+        // Sheet.best API configuration
+        const SHEETBEST_CONFIG = {
+            API_URL: 'https://api.sheetbest.com/sheets/87572aa7-279a-4a0d-82b6-6ed615c0f9b7',
             ENDPOINTS: {
-                USERS: '/users',
-                GIFTS: '/gifts',
-                HISTORIES: '/histories'
+                USERS: '/tabs/users',
+                GIFTS: '/tabs/gifts',
+                HISTORIES: '/tabs/histories'
             }
         };
         // 全局变量
@@ -2718,12 +2718,12 @@
                 savePointsSettingsToStorage();
             }
             
-            // 从SheetDB API获取数据
+            // 从Sheet.best API获取数据
             try {
                 // 获取用户数据
-                const usersResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS);
+                const usersResponse = await axios.get(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.USERS);
                 users = usersResponse.data.map(user => ({
-                    id: user.id,
+                    id: user.id || (users.length + 1).toString(),
                     username: user.username,
                     password: user.password,
                     points: parseInt(user.points) || 0,
@@ -2732,9 +2732,9 @@
                 }));
                 
                 // 获取礼品数据
-                const giftsResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS);
+                const giftsResponse = await axios.get(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.GIFTS);
                 gifts = giftsResponse.data.map(gift => ({
-                    id: gift.id,
+                    id: gift.id || (gifts.length + 1).toString(),
                     name: gift.name,
                     image: gift.image,
                     points: parseInt(gift.points) || 0,
@@ -2743,14 +2743,14 @@
                 }));
                 
                 // 获取历史记录数据
-                const historiesResponse = await axios.get(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.HISTORIES);
+                const historiesResponse = await axios.get(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.HISTORIES);
                 redemptions = historiesResponse.data.map(history => ({
-                    id: history.id,
+                    id: history.id || (redemptions.length + 1).toString(),
                     userId: history.user_id,
                     giftName: history.gift_name,
-                    points: parseInt(history.points_used) || 0,
+                    points: parseInt(history.points_spent) || 0,
                     status: 'completed',
-                    createDate: history.created_at
+                    createDate: history.date
                 }));
                 
                 pointsHistory = redemptions.map(redemption => ({
@@ -2762,7 +2762,7 @@
                     date: redemption.createDate
                 }));
             } catch (error) {
-                console.error('Error fetching data from SheetDB:', error);
+                console.error('Error fetching data from Sheet.best:', error);
                 // 如果API请求失败，使用默认数据
                 useDefaultData();
                 // 显示错误提示
@@ -3162,10 +3162,8 @@
             };
             
             try {
-                // 发送新用户数据到SheetDB API
-                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS, {
-                    data: [newUser]
-                });
+                // 发送新用户数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.USERS, newUser);
                 
                 // 处理推荐奖励
                 if (referralId) {
@@ -3175,11 +3173,12 @@
                         // 给推荐人添加积分
                         referrer.points += 50;
                         
-                        // 更新推荐人数据到SheetDB API
-                        await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + referrer.id, {
-                            data: {
-                                points: referrer.points.toString()
-                            }
+                        // 更新推荐人数据到Sheet.best API
+                        // Sheet.best使用不同的更新方式，需要使用PUT或POST请求
+                        // 这里我们使用POST请求，通过id字段来匹配记录
+                        await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.USERS, {
+                            id: referrer.id,
+                            points: referrer.points.toString()
                         });
                     }
                 }
@@ -3774,11 +3773,10 @@
                 // 扣除用户积分
                 currentUser.points -= gift.points;
                 
-                // 更新用户数据到SheetDB API
-                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + currentUser.id, {
-                    data: {
-                        points: currentUser.points.toString()
-                    }
+                // 更新用户数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.USERS, {
+                    id: currentUser.id,
+                    points: currentUser.points.toString()
                 });
                 
                 // 减少礼品库存
@@ -3787,11 +3785,10 @@
                     gift.status = 'unavailable';
                 }
                 
-                // 更新礼品数据到SheetDB API
-                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + gift.id, {
-                    data: {
-                        stock: gift.stock.toString()
-                    }
+                // 更新礼品数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.GIFTS, {
+                    id: gift.id,
+                    stock: gift.stock.toString()
                 });
                 
                 // 创建兑换记录
@@ -3799,14 +3796,12 @@
                     id: Date.now().toString(),
                     user_id: currentUser.id,
                     gift_name: gift.name,
-                    points_used: gift.points.toString(),
-                    created_at: new Date().toISOString()
+                    points_spent: gift.points.toString(),
+                    date: new Date().toISOString()
                 };
                 
-                // 添加兑换记录到SheetDB API
-                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.HISTORIES, {
-                    data: [redemption]
-                });
+                // 添加兑换记录到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.HISTORIES, redemption);
                 
                 // 重新加载数据
                 await initData();
@@ -4767,10 +4762,8 @@
                     stock: stock.toString()
                 };
                 
-                // 发送新礼品数据到SheetDB API
-                await axios.post(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS, {
-                    data: [newGift]
-                });
+                // 发送新礼品数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.GIFTS, newGift);
                 
                 // 重新加载礼品数据
                 await initData();
@@ -4902,14 +4895,13 @@
                 gift.image = image;
                 gift.status = stock > 0 ? 'available' : 'unavailable';
                 
-                // 更新礼品数据到SheetDB API
-                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + giftId, {
-                    data: {
-                        name: name,
-                        image: image,
-                        points: points.toString(),
-                        stock: stock.toString()
-                    }
+                // 更新礼品数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.GIFTS, {
+                    id: giftId,
+                    name: name,
+                    image: image,
+                    points: points.toString(),
+                    stock: stock.toString()
                 });
                 
                 // 重新加载礼品数据
@@ -4944,8 +4936,11 @@
             }
             
             try {
-                // 从SheetDB API删除礼品
-                await axios.delete(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.GIFTS + '?id=' + giftId);
+                // 从Sheet.best API删除礼品
+                // Sheet.best使用不同的删除方式，需要使用DELETE请求并指定id
+                await axios.delete(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.GIFTS, {
+                    params: { id: giftId }
+                });
                 
                 // 重新加载礼品数据
                 await initData();
@@ -5057,11 +5052,10 @@
                 // 增加用户积分
                 user.points += amount;
                 
-                // 更新用户数据到SheetDB API
-                await axios.patch(SHEETDB_CONFIG.API_URL + SHEETDB_CONFIG.ENDPOINTS.USERS + '?id=' + userId, {
-                    data: {
-                        points: user.points.toString()
-                    }
+                // 更新用户数据到Sheet.best API
+                await axios.post(SHEETBEST_CONFIG.API_URL + SHEETBEST_CONFIG.ENDPOINTS.USERS, {
+                    id: userId,
+                    points: user.points.toString()
                 });
                 
                 // 重新加载用户数据
