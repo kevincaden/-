@@ -2455,7 +2455,7 @@
     <script>
         // SheetDB API configuration
         const SHEETDB_CONFIG = {
-            API_URL: 'https://sheetdb.io/api/v1/0rh6rwne3qve2', // Replace with your actual SheetDB API URL
+            API_URL: 'https://api.sheetbest.com/sheets/87572aa7-279a-4a0d-82b6-6ed615c0f9b7', // 只需要替换这里的接口地址即可，支持 SheetDB 与 Sheet.best 连接地址
             ENDPOINTS: {
                 USERS: '/users',
                 GIFTS: '/gifts',
@@ -2765,6 +2765,8 @@
                 console.error('Error fetching data from SheetDB:', error);
                 // 如果API请求失败，使用默认数据
                 useDefaultData();
+                // 显示错误提示
+                showToast('warning', '数据加载提示', '无法连接到服务器，使用本地默认数据');
             }
         }
         
