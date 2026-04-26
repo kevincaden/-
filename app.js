@@ -1,9 +1,9 @@
 const CONFIG = {
-  BASE_URL: "https://api.sheetbest.com/sheets/87572aa7-279a-4a0d-82b6-6ed615c0f9b7",
-  TABS: {
-    USERS: "/tabs/users",
-    GIFTS: "/tabs/gifts",
-    HISTORIES: "/tabs/histories"
+  BASE_URL: "https://sheetdb.io/api/v1/bzgwqm00fnygm",
+  SHEETS: {
+    USERS: "users",
+    GIFTS: "gifts",
+    HISTORIES: "histories"
   },
   SYNC_MS: 15000,
   IMAGE_PLACEHOLDER: "https://placehold.co/600x400?text=No+Image"
@@ -126,22 +126,27 @@ function escapeHtml(text) {
     .replaceAll("'", "&#39;");
 }
 
-async function apiRequest(path, options = {}) {
-  const { method = "GET", body } = options;
-  const requestInit = { method, headers: {} };
+function buildUrl(path = "", query = {}) {
+  const url = new URL(`${CONFIG.BASE_URL}${path}`);
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+  return url.toString();
+}
 
+async function requestSheet(path = "", options = {}) {
+  const { method = "GET", query = {}, body } = options;
+  const requestInit = { method, headers: {} };
   if (body !== undefined) {
     requestInit.headers["Content-Type"] = "application/json";
     requestInit.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${CONFIG.BASE_URL}${path}`, requestInit);
+  const response = await fetch(buildUrl(path, query), requestInit);
   if (!response.ok) {
     throw new Error(`接口请求失败 (${response.status})`);
-  }
-
-  if (response.status === 204) {
-    return null;
   }
 
   const text = await response.text();
@@ -156,30 +161,61 @@ async function apiRequest(path, options = {}) {
   }
 }
 
-async function fetchUserByUsername(username) {
-  const encoded = encodeURIComponent(username);
-  const data = await apiRequest(`${CONFIG.TABS.USERS}/username/${encoded}`);
+function toArray(data) {
+  return Array.isArray(data) ? data : [];
+}
 
-  if (Array.isArray(data) && data.length > 0) {
-    return normalizeUser(data[0]);
+async function sheetGetAll(sheetName) {
+  const data = await requestSheet("", { query: { sheet: sheetName } });
+  return toArray(data);
+}
+
+async function sheetSearch(sheetName, filters) {
+  const data = await requestSheet("/search", {
+    query: { ...filters, sheet: sheetName }
+  });
+  return toArray(data);
+}
+
+async function sheetPatchBy(sheetName, column, value, patchData) {
+  const path = `/${encodeURIComponent(column)}/${encodeURIComponent(value)}`;
+  return requestSheet(path, {
+    method: "PATCH",
+    query: { sheet: sheetName },
+    body: { data: patchData }
+  });
+}
+
+async function sheetDeleteBy(sheetName, column, value) {
+  const path = `/${encodeURIComponent(column)}/${encodeURIComponent(value)}`;
+  return requestSheet(path, {
+    method: "DELETE",
+    query: { sheet: sheetName }
+  });
+}
+
+async function sheetAppendRow(sheetName, rowData) {
+  return requestSheet("", {
+    method: "POST",
+    query: { sheet: sheetName },
+    body: { data: [rowData] }
+  });
+}
+
+async function fetchUserByUsername(username) {
+  const rows = await sheetSearch(CONFIG.SHEETS.USERS, { username });
+  if (rows.length === 0) {
+    return null;
   }
-  if (data && typeof data === "object" && data.username) {
-    return normalizeUser(data);
-  }
-  return null;
+  return normalizeUser(rows[0]);
 }
 
 async function fetchGiftById(giftId) {
-  const encoded = encodeURIComponent(giftId);
-  const data = await apiRequest(`${CONFIG.TABS.GIFTS}/id/${encoded}`);
-
-  if (Array.isArray(data) && data.length > 0) {
-    return normalizeGift(data[0]);
+  const rows = await sheetSearch(CONFIG.SHEETS.GIFTS, { id: giftId });
+  if (rows.length === 0) {
+    return null;
   }
-  if (data && typeof data === "object" && data.id !== undefined) {
-    return normalizeGift(data);
-  }
-  return null;
+  return normalizeGift(rows[0]);
 }
 
 async function withLoading(text, action) {
@@ -195,7 +231,7 @@ function setLoading(show, text = "处理中...") {
   if (show) {
     state.pendingOps += 1;
     if (state.pendingOps === 1) {
-      els.loadingOverlay.classList.remove("hidden", "pointer-events-none");
+      els.loadingOverlay.classList.remove("hidden");
       els.loadingOverlay.classList.add("flex");
       setControlsDisabled(true);
     }
@@ -205,7 +241,7 @@ function setLoading(show, text = "处理中...") {
 
   state.pendingOps = Math.max(0, state.pendingOps - 1);
   if (state.pendingOps === 0) {
-    els.loadingOverlay.classList.add("hidden", "pointer-events-none");
+    els.loadingOverlay.classList.add("hidden");
     els.loadingOverlay.classList.remove("flex");
     setControlsDisabled(false);
   }
@@ -322,11 +358,9 @@ async function login() {
 
   try {
     await withLoading("正在登录...", async () => {
-      const usersRaw = await apiRequest(CONFIG.TABS.USERS);
-      const users = Array.isArray(usersRaw) ? usersRaw.map(normalizeUser) : [];
-      const matchedUser = users.find(
-        (user) => user.username === username && user.password === password
-      );
+      const usersRaw = await sheetSearch(CONFIG.SHEETS.USERS, { username });
+      const users = usersRaw.map(normalizeUser);
+      const matchedUser = users.find((user) => user.password === password);
 
       if (!matchedUser) {
         throw new Error("用户名或密码错误");
@@ -417,8 +451,8 @@ async function loadGifts({ silent = false } = {}) {
   }
 
   try {
-    const giftsRaw = await apiRequest(CONFIG.TABS.GIFTS);
-    state.gifts = Array.isArray(giftsRaw) ? giftsRaw.map(normalizeGift) : [];
+    const giftsRaw = await sheetGetAll(CONFIG.SHEETS.GIFTS);
+    state.gifts = giftsRaw.map(normalizeGift);
     renderGiftList();
   } catch (_error) {
     if (!silent) {
@@ -520,33 +554,22 @@ async function exchangeGift(giftId) {
       const newPoints = latestUser.points - latestGift.points;
       const newStock = latestGift.stock - 1;
 
-      await apiRequest(
-        `${CONFIG.TABS.USERS}/username/${encodeURIComponent(latestUser.username)}`,
-        {
-          method: "PATCH",
-          body: { points: String(newPoints) }
-        }
-      );
+      await sheetPatchBy(CONFIG.SHEETS.USERS, "username", latestUser.username, {
+        points: String(newPoints)
+      });
 
-      await apiRequest(
-        `${CONFIG.TABS.GIFTS}/id/${encodeURIComponent(latestGift.id)}`,
-        {
-          method: "PATCH",
-          body: { stock: String(newStock) }
-        }
-      );
+      await sheetPatchBy(CONFIG.SHEETS.GIFTS, "id", latestGift.id, {
+        stock: String(newStock)
+      });
 
       const now = new Date();
-      await apiRequest(CONFIG.TABS.HISTORIES, {
-        method: "POST",
-        body: {
-          username: latestUser.username,
-          gift_id: latestGift.id,
-          gift_name: latestGift.name,
-          cost: String(latestGift.points),
-          date: now.toLocaleString("zh-CN", { hour12: false }),
-          timestamp: now.toISOString()
-        }
+      await sheetAppendRow(CONFIG.SHEETS.HISTORIES, {
+        username: latestUser.username,
+        gift_id: latestGift.id,
+        gift_name: latestGift.name,
+        cost: String(latestGift.points),
+        date: now.toLocaleString("zh-CN", { hour12: false }),
+        timestamp: now.toISOString()
       });
 
       state.currentUser = { ...latestUser, points: newPoints };
@@ -605,14 +628,11 @@ async function saveGiftEdit(event) {
 
   try {
     await withLoading("正在保存礼品...", async () => {
-      await apiRequest(`${CONFIG.TABS.GIFTS}/id/${encodeURIComponent(giftId)}`, {
-        method: "PATCH",
-        body: {
-          name,
-          points: String(points),
-          stock: String(stock),
-          image
-        }
+      await sheetPatchBy(CONFIG.SHEETS.GIFTS, "id", giftId, {
+        name,
+        points: String(points),
+        stock: String(stock),
+        image
       });
       closeEditModal();
       await loadGifts({ silent: true });
@@ -634,9 +654,7 @@ async function deleteGift(giftId) {
 
   try {
     await withLoading("正在删除礼品...", async () => {
-      await apiRequest(`${CONFIG.TABS.GIFTS}/id/${encodeURIComponent(giftId)}`, {
-        method: "DELETE"
-      });
+      await sheetDeleteBy(CONFIG.SHEETS.GIFTS, "id", giftId);
       await loadGifts({ silent: true });
       showToast("礼品已删除");
     });
@@ -670,15 +688,12 @@ async function addGift(event) {
         throw new Error("礼品ID已存在，请更换");
       }
 
-      await apiRequest(CONFIG.TABS.GIFTS, {
-        method: "POST",
-        body: {
-          id,
-          name,
-          points: String(points),
-          stock: String(stock),
-          image
-        }
+      await sheetAppendRow(CONFIG.SHEETS.GIFTS, {
+        id,
+        name,
+        points: String(points),
+        stock: String(stock),
+        image
       });
 
       els.addGiftForm.reset();
@@ -749,13 +764,9 @@ async function updateManagedUserPoints(event) {
 
   try {
     await withLoading("正在更新积分...", async () => {
-      await apiRequest(
-        `${CONFIG.TABS.USERS}/username/${encodeURIComponent(state.managedUser.username)}`,
-        {
-          method: "PATCH",
-          body: { points: String(newPoints) }
-        }
-      );
+      await sheetPatchBy(CONFIG.SHEETS.USERS, "username", state.managedUser.username, {
+        points: String(newPoints)
+      });
 
       state.managedUser.points = newPoints;
       els.managedUserStatus.textContent = `当前用户: ${state.managedUser.username} | 积分: ${newPoints}`;
