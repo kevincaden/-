@@ -772,3 +772,7 @@ async function updateManagedUserPoints(event) {
     showToast("积分更新失败", true);
   }
 }
+
+function showAddGiftModal() {
+  alert("请在 index.html 中补全添加礼品的 Form 容器，或者将代码改为直接操作表单");
+}

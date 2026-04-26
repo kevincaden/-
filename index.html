@@ -71,34 +71,36 @@
     </section>
   </main>
 
-  <div id="edit-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-slate-900/40 px-4">
-    <div class="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
-      <h3 class="mb-4 text-lg font-semibold">编辑礼品</h3>
+  <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-5 rounded-lg shadow-xl text-center">
+      <p id="loading-text" class="text-lg font-semibold">正在处理...</p>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-white shadow-2xl hidden z-50"></div>
+
+  <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40 p-4">
+    <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-2xl">
+      <h3 class="text-xl font-bold mb-4">编辑礼品</h3>
       <form id="edit-gift-form" class="space-y-3">
-        <input id="edit-gift-id" type="text" class="hidden">
-        <input id="edit-gift-name" type="text" placeholder="礼品名称" class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" required>
-        <div class="grid grid-cols-2 gap-2">
-          <input id="edit-gift-points" type="number" min="0" step="1" placeholder="所需积分" class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" required>
-          <input id="edit-gift-stock" type="number" min="0" step="1" placeholder="库存" class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" required>
-        </div>
-        <input id="edit-gift-image" type="url" placeholder="图片链接（https://...）" class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500">
-        <div class="flex justify-end gap-2">
-          <button id="cancel-edit-btn" type="button" class="rounded border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">取消</button>
-          <button type="submit" class="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">保存修改</button>
+        <input type="hidden" id="edit-gift-id">
+        <input type="text" id="edit-gift-name" placeholder="名称" class="w-full border p-2 rounded" required>
+        <input type="number" id="edit-gift-points" placeholder="所需积分" class="w-full border p-2 rounded" required>
+        <input type="number" id="edit-gift-stock" placeholder="库存数量" class="w-full border p-2 rounded" required>
+        <input type="url" id="edit-gift-image" placeholder="图片 URL" class="w-full border p-2 rounded">
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded">保存</button>
+          <button type="button" id="cancel-edit-btn" class="flex-1 bg-gray-200 py-2 rounded">取消</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div id="loading-overlay" class="pointer-events-none fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/30">
-    <div class="flex items-center gap-3 rounded-lg bg-white px-4 py-3 shadow-lg">
-      <div class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
-      <p id="loading-text" class="text-sm text-slate-700">处理中...</p>
-    </div>
-  </div>
-
-  <div id="toast" class="pointer-events-none fixed bottom-4 right-4 z-50 hidden rounded bg-slate-900 px-4 py-2 text-sm text-white shadow-lg"></div>
-
   <script src="app.js"></script>
+  <script>
+    function showAddGiftModal() {
+      alert("请在 index.html 中补全添加礼品的 Form 容器，或者将代码改为直接操作表单");
+    }
+  </script>
 </body>
 </html>
