@@ -1,5 +1,5 @@
 const CONFIG = {
-  BASE_URL: "https://sheetdb.io/api/v1/bzgwqm00fnygm",
+  BASE_URL: "https://sheetdb.io/api/v1/0rh6rwne3qve2",
   SHEETS: {
     USERS: "users",
     GIFTS: "gifts",
