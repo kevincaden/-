@@ -37,23 +37,23 @@
         <div class="rounded-lg border border-amber-300 bg-amber-50 p-4">
           <h3 class="mb-3 text-base font-semibold text-amber-900">新增礼品</h3>
           <form id="add-gift-form" class="space-y-2">
-            <input id="add-gift-id" type="text" placeholder="礼品ID（留空自动生成）" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500">
-            <input id="add-gift-name" type="text" placeholder="礼品名称" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
+            <input id="add-gift-id" name="id" type="text" placeholder="礼品ID（留空自动生成）" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500">
+            <input id="add-gift-name" name="name" type="text" placeholder="礼品名称" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
             <div class="grid grid-cols-2 gap-2">
-              <input id="add-gift-points" type="number" min="0" step="1" placeholder="所需积分" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
-              <input id="add-gift-stock" type="number" min="0" step="1" placeholder="库存" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
+              <input id="add-gift-points" name="points" type="number" min="0" step="1" placeholder="所需积分" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
+              <input id="add-gift-stock" name="stock" type="number" min="0" step="1" placeholder="库存" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500" required>
             </div>
-            <input id="add-gift-image" type="url" placeholder="图片链接（https://...）" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500">
+            <input id="add-gift-image" name="image" type="url" placeholder="图片链接（https://...）" class="w-full rounded border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500">
             <button type="submit" class="w-full rounded bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700">新增礼品</button>
           </form>
         </div>
 
-        <div class="rounded-lg border border-indigo-300 bg-indigo-50 p-4">
+        <div id="manage-user-section" class="admin-only rounded-lg border border-indigo-300 bg-indigo-50 p-4">
           <h3 class="mb-3 text-base font-semibold text-indigo-900">积分管理</h3>
           <div class="space-y-2">
             <div class="flex gap-2">
               <input id="manage-username" type="text" placeholder="输入用户名并检索" class="w-full rounded border border-indigo-300 px-3 py-2 text-sm outline-none focus:border-indigo-500">
-              <button id="load-user-btn" type="button" class="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">检索</button>
+              <button id="search-user-btn" type="button" class="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">检索</button>
             </div>
             <p id="managed-user-status" class="text-sm text-indigo-700">未选择用户</p>
             <form id="update-points-form" class="flex gap-2">

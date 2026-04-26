@@ -43,14 +43,9 @@ function cacheElements() {
   els.adminSections = document.querySelectorAll(".admin-only");
 
   els.addGiftForm = document.getElementById("add-gift-form");
-  els.addGiftId = document.getElementById("add-gift-id");
-  els.addGiftName = document.getElementById("add-gift-name");
-  els.addGiftPoints = document.getElementById("add-gift-points");
-  els.addGiftStock = document.getElementById("add-gift-stock");
-  els.addGiftImage = document.getElementById("add-gift-image");
 
   els.manageUsername = document.getElementById("manage-username");
-  els.loadUserBtn = document.getElementById("load-user-btn");
+  els.searchUserBtn = document.getElementById("search-user-btn");
   els.managedUserStatus = document.getElementById("managed-user-status");
   els.managedUserPoints = document.getElementById("managed-user-points");
   els.updatePointsForm = document.getElementById("update-points-form");
@@ -76,7 +71,7 @@ function bindEvents() {
   els.giftList.addEventListener("click", handleGiftActions);
 
   els.addGiftForm.addEventListener("submit", addGift);
-  els.loadUserBtn.addEventListener("click", loadManagedUser);
+  els.searchUserBtn.addEventListener("click", loadManagedUser);
   els.updatePointsForm.addEventListener("submit", updateManagedUserPoints);
 
   els.editGiftForm.addEventListener("submit", saveGiftEdit);
@@ -182,7 +177,7 @@ async function sheetPatchBy(sheetName, column, value, patchData) {
   return requestSheet(path, {
     method: "PATCH",
     query: { sheet: sheetName },
-    body: { data: patchData }
+    body: patchData
   });
 }
 
@@ -670,11 +665,12 @@ async function addGift(event) {
     return;
   }
 
-  const id = els.addGiftId.value.trim() || `gift_${Date.now()}`;
-  const name = els.addGiftName.value.trim();
-  const points = toInt(els.addGiftPoints.value);
-  const stock = toInt(els.addGiftStock.value);
-  const image = els.addGiftImage.value.trim() || CONFIG.IMAGE_PLACEHOLDER;
+  const formData = new FormData(els.addGiftForm);
+  const id = String(formData.get("id") ?? "").trim() || `gift_${Date.now()}`;
+  const name = String(formData.get("name") ?? "").trim();
+  const points = toInt(formData.get("points"));
+  const stock = toInt(formData.get("stock"));
+  const image = String(formData.get("image") ?? "").trim() || CONFIG.IMAGE_PLACEHOLDER;
 
   if (!name) {
     showToast("请输入礼品名称", true);
